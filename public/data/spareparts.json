@@ -1,0 +1,19 @@
+[
+  {
+    "id": "SP001",
+    "name": "Oil Filter",
+    "stock": 15,
+    "price": 250000,
+    "status": "Available",
+    "isPromo": false
+  },
+  {
+    "id": "SP002",
+    "name": "Engine Oil",
+    "stock": 30,
+    "price": 300000,
+    "status": "Available",
+    "isPromo": true,
+    "promoPrice": 275000
+  }
+]

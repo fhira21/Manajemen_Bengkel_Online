@@ -1,0 +1,44 @@
+{
+  "bookedDates": ["2023-07-15", "2023-07-20", "2023-07-25"],
+  "services": [
+    {
+      "id": 1,
+      "name": "Ganti Oli Mesin",
+      "category": "Perawatan Rutin",
+      "duration": "1 jam",
+      "options": [
+        { "id": 101, "name": "Oli Mesin VW Original", "price": 450000 },
+        { "id": 102, "name": "Filter Oli", "price": 150000 },
+        { "id": 103, "name": "Pembersihan Mesin", "price": 200000 }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Ganti Kampas Rem",
+      "category": "Perbaikan",
+      "duration": "2 jam",
+      "options": [
+        { "id": 201, "name": "Kampas Rem Depan", "price": 1200000 },
+        { "id": 202, "name": "Kampas Rem Belakang", "price": 950000 },
+        { "id": 203, "name": "Minyak Rem", "price": 300000 }
+      ]
+    }
+  ],
+  "vehicleTypes": ["Sedan", "SUV", "MPV", "Hatchback"],
+  "promoCodes": [
+    {
+      "code": "VWSERVICE15",
+      "discountType": "percentage",
+      "value": 15,
+      "validUntil": "2030-12-30",
+      "applicableServices": [1, 2]
+    },
+    {
+      "code": "VWOILFREE",
+      "discountType": "fixed",
+      "value": 200000,
+      "validUntil": "2030-01-31",
+      "applicableServices": [1]
+    }
+  ]
+}

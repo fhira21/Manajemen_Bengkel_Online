@@ -1,0 +1,28 @@
+{
+  "promos": [
+    {
+      "id": 1,
+      "title": "Service Berkala 40.000 KM",
+      "description": "Diskon 15% untuk paket service berkala 40.000 KM",
+      "image": "/promo1.jpg",
+      "validUntil": "30 Desember 2023",
+      "code": "VWSERVICE15"
+    },
+    {
+      "id": 2,
+      "title": "Ganti Oli Mesin",
+      "description": "Gratis pemeriksaan mesin dengan ganti oli mesin",
+      "image": "/promo2.jpg",
+      "validUntil": "31 Januari 2024",
+      "code": "VWOILFREE"
+    },
+    {
+      "id": 3,
+      "title": "Paket Sparepart",
+      "description": "Diskon 20% untuk pembelian paket sparepart rem depan",
+      "image": "/promo3.png",
+      "validUntil": "15 Februari 2024",
+      "code": "VWREM20"
+    }
+  ]
+}

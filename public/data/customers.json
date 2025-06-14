@@ -1,0 +1,12 @@
+[
+  {
+    "id": "C001",
+    "name": "John Doe",
+    "phone": "+6285176700253",
+    "email": "john@example.com",
+    "vehiclePlate": "B1234ABC",
+    "vehicleModel": "Volkswagen Golf",
+    "lastServiceDate": "2023-03-10",
+    "lastServiceType": "Regular Service"
+  }
+]

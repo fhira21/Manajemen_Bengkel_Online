@@ -1,0 +1,16 @@
+[
+  {
+    "id": "B001",
+    "customerId": "C001",
+    "vehiclePlate": "B1234ABC",
+    "serviceType": "Regular Service",
+    "bookingDate": "2023-06-15",
+    "mechanicId": "M001",
+    "status": "In Progress",
+    "sparepartsUsed": [
+      {"id": "SP001", "name": "Oil Filter", "quantity": 1},
+      {"id": "SP002", "name": "Engine Oil", "quantity": 4}
+    ],
+    "notes": "Engine noise complaint"
+  }
+]

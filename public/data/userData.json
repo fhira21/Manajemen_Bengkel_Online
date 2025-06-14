@@ -1,0 +1,25 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "username": "admin",
+      "password": "admin123",
+      "role": "admin",
+      "nama": "Administrator"
+    },
+    {
+      "id": 2,
+      "username": "montir1",
+      "password": "montir123",
+      "role": "montir",
+      "nama": "Budi Santoso"
+    },
+    {
+      "id": 3,
+      "username": "montir2",
+      "password": "montir456",
+      "role": "montir",
+      "nama": "Ani Wijaya"
+    }
+  ]
+}
