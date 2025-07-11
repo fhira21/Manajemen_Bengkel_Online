@@ -1,0 +1,62 @@
+[
+  {
+    "id": 1,
+    "name": "Service Ringan",
+    "description": "Pemeriksaan dasar kendaraan seperti oli, rem, dan filter.",
+    "price": 150000
+  },
+  {
+    "id": 2,
+    "name": "Service Berkala",
+    "description": "Pemeriksaan menyeluruh dan penggantian komponen penting secara berkala.",
+    "price": 250000
+  },
+  {
+    "id": 3,
+    "name": "Service Berat",
+    "description": "Perbaikan besar seperti overhaul mesin dan sistem transmisi.",
+    "price": 500000
+  },
+  {
+    "id": 4,
+    "name": "Tune Up Mesin",
+    "description": "Pengaturan ulang performa mesin untuk efisiensi maksimal.",
+    "price": 200000
+  },
+  {
+    "id": 5,
+    "name": "Ganti Oli Mesin",
+    "description": "Penggantian oli mesin menggunakan oli berkualitas tinggi.",
+    "price": 90000
+  },
+  {
+    "id": 6,
+    "name": "Pengecekan Rem",
+    "description": "Pemeriksaan dan perawatan sistem rem kendaraan.",
+    "price": 100000
+  },
+  {
+    "id": 7,
+    "name": "Injection Cleaning",
+    "description": "Pembersihan sistem injeksi bahan bakar untuk efisiensi pembakaran.",
+    "price": 170000
+  },
+  {
+    "id": 8,
+    "name": "Pembersihan Radiator",
+    "description": "Pembersihan dan pengecekan sistem pendingin radiator.",
+    "price": 120000
+  },
+  {
+    "id": 9,
+    "name": "Service AC",
+    "description": "Pengecekan, pengisian freon, dan perawatan sistem AC.",
+    "price": 150000
+  },
+  {
+    "id": 10,
+    "name": "Re-Mapping ECU",
+    "description": "Penyetelan ulang ECU untuk meningkatkan performa mesin.",
+    "price": 400000
+  }
+]

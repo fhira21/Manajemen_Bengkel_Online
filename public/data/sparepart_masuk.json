@@ -1,0 +1,26 @@
+[
+  {
+    "id_masuk": 1,
+    "id_sparepart": 1,
+    "jumlah": 5,
+    "tanggal": "2025-06-01",
+    "id_user": 5,
+    "keterangan": "Restock awal bulan"
+  },
+  {
+    "id_masuk": 1,
+    "id_sparepart": 3,
+    "jumlah": 15,
+    "tanggal": "2025-06-01",
+    "id_user": 3,
+    "keterangan": "Restock awal bulan"
+  },
+  {
+    "id_masuk": 1,
+    "id_sparepart": 2,
+    "jumlah": 20,
+    "tanggal": "2025-06-01",
+    "id_user": 6,
+    "keterangan": "Restock awal bulan"
+  }
+]

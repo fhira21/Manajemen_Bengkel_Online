@@ -1,19 +1,26 @@
 [
   {
-    "id": "SP001",
-    "name": "Oil Filter",
-    "stock": 15,
-    "price": 250000,
-    "status": "Available",
-    "isPromo": false
+    "id_sparepart": 1,
+    "nama": "Oli Shell 10W-40",
+    "harga": 90000,
+    "stok": 20,
+    "updated_at": "2025-06-20T10:00:00",
+    "created_by": 3
   },
   {
-    "id": "SP002",
-    "name": "oli samping",
-    "stock": 30,
-    "price": 300000,
-    "status": "Available",
-    "isPromo": true,
-    "promoPrice": 275000
+    "id_sparepart": 2,
+    "nama": "Kampas Rem Depan",
+    "harga": 150000,
+    "stok": 15,
+    "updated_at": "2025-06-21T14:00:00",
+    "created_by": 3
+  },
+  {
+    "id_sparepart": 3,
+    "nama": "Kampas Rem Belakang",
+    "harga": 250000,
+    "stok": 10,
+    "updated_at": "2025-06-21T14:00:00",
+    "created_by": 3
   }
 ]

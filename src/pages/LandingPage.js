@@ -24,6 +24,7 @@ const LandingPage = () => {
   // State untuk booking section
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(null);
+  const [services, setServices] = useState([]);
   const [bookingData, setBookingData] = useState({
     services: [],
     vehicleTypes: [],
@@ -65,6 +66,20 @@ const LandingPage = () => {
   }, []);
 
   useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const response = await fetch("/data/services.json");
+        const data = await response.json();
+        setServices(data); // Data langsung berupa array
+      } catch (error) {
+        console.error("Gagal memuat data layanan:", error);
+      }
+    };
+
+    fetchServices();
+  }, []);
+
+  useEffect(() => {
     const fetchReviews = async () => {
       try {
         const response = await fetch("/data/review.json");
@@ -92,7 +107,7 @@ const LandingPage = () => {
           throw new Error("Failed to fetch promos");
         }
         const data = await response.json();
-        setPromos(data.promos);
+        setPromos(data); // LANGSUNG data, karena isinya array
       } catch (err) {
         setErrorPromos(err.message);
       } finally {
@@ -140,9 +155,9 @@ const LandingPage = () => {
   // Handle service selection
   const handleServiceChange = (e) => {
     const serviceId = parseInt(e.target.value);
-    const service = bookingData.services.find((s) => s.id === serviceId);
+    const service = services.find((s) => s.id === serviceId);
 
-    if (service) {
+    if (service && !formData.selectedServices.some((s) => s.id === serviceId)) {
       setFormData((prev) => ({
         ...prev,
         selectedServices: [...prev.selectedServices, service],
@@ -168,12 +183,6 @@ const LandingPage = () => {
       selectedServices: prev.selectedServices.filter(
         (service) => service.id !== serviceId
       ),
-      selectedOptions: prev.selectedOptions.filter((optionId) => {
-        // Remove options that belong to the removed service
-        const service = prev.selectedServices.find((s) => s.id === serviceId);
-        if (!service) return true;
-        return !service.options.some((opt) => opt.id === optionId);
-      }),
     }));
   };
 
@@ -235,46 +244,14 @@ const LandingPage = () => {
     }));
   };
 
-  const calculateTotal = () => {
-    if (formData.checkOnly) return 0;
-
-    const subtotal = formData.selectedOptions.reduce((total, optionId) => {
-      for (const service of formData.selectedServices) {
-        const option = service.options.find((opt) => opt.id === optionId);
-        if (option) return total + option.price;
-      }
-      return total;
-    }, 0);
-
-    if (!formData.appliedPromo) return subtotal;
-
-    const promo = formData.appliedPromo;
-    let discount = 0;
-
-    if (promo.discountType === "percentage") {
-      discount = subtotal * (promo.value / 100);
-    } else {
-      discount = promo.value;
-    }
-
-    // Ensure discount doesn't make total negative
-    return Math.max(subtotal - discount, 0);
-  };
-
   const calculateSubtotal = () => {
-    if (formData.checkOnly) return 0;
-
-    return formData.selectedOptions.reduce((total, optionId) => {
-      for (const service of formData.selectedServices) {
-        const option = service.options.find((opt) => opt.id === optionId);
-        if (option) return total + option.price;
-      }
-      return total;
+    return formData.selectedServices.reduce((total, service) => {
+      return total + service.price;
     }, 0);
   };
 
   const calculateDiscount = () => {
-    if (!formData.appliedPromo || formData.checkOnly) return 0;
+    if (!formData.appliedPromo) return 0;
 
     const subtotal = calculateSubtotal();
     const promo = formData.appliedPromo;
@@ -284,6 +261,12 @@ const LandingPage = () => {
     } else {
       return Math.min(promo.value, subtotal);
     }
+  };
+
+  const calculateTotal = () => {
+    const subtotal = calculateSubtotal();
+    const discount = calculateDiscount();
+    return Math.max(subtotal - discount, 0);
   };
 
   // Get selected options with details
@@ -313,21 +296,15 @@ const LandingPage = () => {
       ...formData,
       date: selectedDate ? format(selectedDate, "yyyy-MM-dd") : "",
       totalPrice: calculateTotal(),
-      subtotal: calculateSubtotal(),
-      discount: calculateDiscount(),
       selectedServices: formData.selectedServices.map((s) => s.name),
-      checkOnly: formData.checkOnly,
       promoCode: formData.appliedPromo?.code || null,
     };
 
     console.log("Booking details:", bookingDetails);
     alert(
-      formData.checkOnly
-        ? "Booking untuk pemeriksaan saja berhasil!"
-        : `Booking service berhasil! Total biaya: Rp${calculateTotal().toLocaleString()}`
+      `Booking service berhasil! Total biaya: Rp${calculateTotal().toLocaleString()}`
     );
   };
-
   const calculateAverageRating = () => {
     if (reviews.length === 0) return 0;
 
@@ -495,7 +472,74 @@ const LandingPage = () => {
                       Pilih Tanggal
                     </h2>
                     <div className="bg-gray-50 rounded-lg border border-gray-200 p-4">
-                      {/* Calendar content remains the same */}
+                      <div className="flex justify-between items-center mb-4">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setCurrentMonth(subMonths(currentMonth, 1))
+                          }
+                          className="p-2 rounded-full hover:bg-gray-200"
+                        >
+                          &lt;
+                        </button>
+                        <h3 className="text-lg font-medium">
+                          {format(currentMonth, "MMMM yyyy")}
+                        </h3>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setCurrentMonth(addMonths(currentMonth, 1))
+                          }
+                          className="p-2 rounded-full hover:bg-gray-200"
+                        >
+                          &gt;
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-7 gap-1 mb-2 text-sm text-gray-500">
+                        {["M", "S", "S", "R", "K", "J", "S"].map((day) => (
+                          <div key={day} className="text-center">
+                            {day}
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="grid grid-cols-7 gap-1">
+                        {daysInMonth.map((day) => {
+                          const isBooked = isDateBooked(day);
+                          const isSelected =
+                            selectedDate && isSameDay(day, selectedDate);
+                          const isCurrentMonth = isSameMonth(day, currentMonth);
+
+                          let dayClass =
+                            "text-center p-2 rounded-full text-sm ";
+
+                          if (!isCurrentMonth) {
+                            dayClass += "text-gray-300";
+                          } else if (isBooked) {
+                            dayClass +=
+                              "bg-gray-300 text-gray-600 cursor-not-allowed";
+                          } else if (isSelected) {
+                            dayClass += "bg-green-500 text-white";
+                          } else {
+                            dayClass += "hover:bg-green-100 cursor-pointer";
+                          }
+
+                          return (
+                            <div
+                              key={day.toString()}
+                              className={dayClass}
+                              onClick={() =>
+                                isCurrentMonth &&
+                                !isBooked &&
+                                setSelectedDate(day)
+                              }
+                            >
+                              {format(day, "d")}
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
 
@@ -585,9 +629,9 @@ const LandingPage = () => {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                     >
                       <option value="">Pilih Service</option>
-                      {bookingData.services?.map((service) => (
+                      {services.map((service) => (
                         <option key={service.id} value={service.id}>
-                          {service.name} ({service.duration})
+                          {service.name} - Rp{service.price.toLocaleString()}
                         </option>
                       ))}
                     </select>
@@ -595,29 +639,51 @@ const LandingPage = () => {
 
                   {/* Show selected services */}
                   {formData.selectedServices.length > 0 && (
-                    <div className="mb-4">
+                    <div className="mb-6">
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Service yang dipilih:
                       </label>
-                      <div className="space-y-2">
+                      <ul className="space-y-2">
                         {formData.selectedServices.map((service) => (
-                          <div
+                          <li
                             key={service.id}
                             className="flex justify-between items-center p-2 bg-gray-50 rounded"
                           >
-                            <span>
-                              {service.name} ({service.category})
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => removeService(service.id)}
-                              className="text-red-500 hover:text-red-700"
-                            >
-                              ✕
-                            </button>
-                          </div>
+                            <div>
+                              <span className="font-medium">
+                                {service.name}
+                              </span>
+                              <p className="text-sm text-gray-600">
+                                {service.description}
+                              </p>
+                            </div>
+                            <div className="flex items-center">
+                              <span className="text-sm font-medium mr-4">
+                                Rp{service.price.toLocaleString()}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => removeService(service.id)}
+                                className="text-red-500 hover:text-red-700"
+                              >
+                                <svg
+                                  className="w-5 h-5"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M6 18L18 6M6 6l12 12"
+                                  />
+                                </svg>
+                              </button>
+                            </div>
+                          </li>
                         ))}
-                      </div>
+                      </ul>
                     </div>
                   )}
 
@@ -644,50 +710,6 @@ const LandingPage = () => {
                       </label>
                     </div>
                   )}
-
-                  {/* Service Options for all selected services */}
-                  {formData.selectedServices.length > 0 &&
-                    !formData.checkOnly && (
-                      <div className="mb-6">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Pilihan Sparepart/Service:
-                        </label>
-                        <div className="space-y-4">
-                          {formData.selectedServices.map((service) => (
-                            <div key={service.id} className="border-b pb-4">
-                              <h3 className="font-medium text-gray-900 mb-2">
-                                {service.name}
-                              </h3>
-                              <div className="space-y-2">
-                                {service.options.map((option) => (
-                                  <div
-                                    key={option.id}
-                                    className="flex items-center"
-                                  >
-                                    <input
-                                      type="checkbox"
-                                      id={`option-${option.id}`}
-                                      checked={formData.selectedOptions.includes(
-                                        option.id
-                                      )}
-                                      onChange={() => toggleOption(option.id)}
-                                      className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-                                    />
-                                    <label
-                                      htmlFor={`option-${option.id}`}
-                                      className="ml-2 text-sm text-gray-700"
-                                    >
-                                      {option.name} - Rp
-                                      {option.price.toLocaleString()}
-                                    </label>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
 
                   {/* Additional Notes */}
                   <div className="mb-6">
@@ -719,87 +741,38 @@ const LandingPage = () => {
                           <h3 className="font-medium text-gray-900 mb-2">
                             Service yang dipilih:
                           </h3>
-                          <ul className="space-y-1">
+                          <ul className="space-y-2">
                             {formData.selectedServices.map((service) => (
-                              <li key={service.id} className="text-sm">
-                                {service.name} ({service.duration})
+                              <li
+                                key={service.id}
+                                className="flex justify-between"
+                              >
+                                <span className="text-sm">{service.name}</span>
+                                <span className="text-sm">
+                                  Rp{service.price.toLocaleString()}
+                                </span>
                               </li>
                             ))}
                           </ul>
-                          {formData.checkOnly && (
-                            <p className="text-sm text-green-600 mt-2">
-                              Hanya pemeriksaan
-                            </p>
-                          )}
                         </div>
-
-                        {/* Selected Options */}
-                        {!formData.checkOnly &&
-                          getSelectedOptions().length > 0 && (
-                            <div className="mb-4">
-                              <h3 className="font-medium text-gray-900 mb-2">
-                                Yang akan diganti:
-                              </h3>
-                              <ul className="space-y-2">
-                                {getSelectedOptions().map((option) => (
-                                  <li
-                                    key={option.id}
-                                    className="flex justify-between group"
-                                  >
-                                    <span className="text-sm">
-                                      {option.name} ({option.serviceName})
-                                      <button
-                                        type="button"
-                                        onClick={() => removeOption(option.id)}
-                                        className="ml-2 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                                      >
-                                        <svg
-                                          className="w-4 h-4"
-                                          fill="none"
-                                          stroke="currentColor"
-                                          viewBox="0 0 24 24"
-                                        >
-                                          <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={2}
-                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                          />
-                                        </svg>
-                                      </button>
-                                    </span>
-                                    <span className="text-sm">
-                                      Rp{option.price.toLocaleString()}
-                                    </span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
 
                         {/* Discount Breakdown */}
                         {formData.appliedPromo && (
                           <div className="mb-4">
-                            <div className="flex justify-between items-center border-b pb-2">
-                              <span className="text-sm font-medium text-gray-700">
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm text-gray-700">
                                 Subtotal
                               </span>
                               <span className="text-sm">
                                 Rp{calculateSubtotal().toLocaleString()}
                               </span>
                             </div>
-                            <div className="flex justify-between items-center pt-2">
+
+                            <div className="flex justify-between items-center text-sm text-red-600 mt-1">
+                              <div>Diskon ({formData.appliedPromo.code})</div>
                               <div>
-                                <span className="text-sm font-medium text-gray-700">
-                                  Diskon
-                                </span>
-                                <span className="text-xs text-gray-500 block">
-                                  ({formData.appliedPromo.code})
-                                </span>
-                              </div>
-                              <span className="text-sm text-red-500">
                                 -Rp{calculateDiscount().toLocaleString()}
-                              </span>
+                              </div>
                             </div>
                           </div>
                         )}
@@ -811,9 +784,7 @@ const LandingPage = () => {
                               Total
                             </span>
                             <span className="text-lg font-bold text-green-600">
-                              {formData.checkOnly
-                                ? "Gratis"
-                                : `Rp${calculateTotal().toLocaleString()}`}
+                              Rp{calculateTotal().toLocaleString()}
                             </span>
                           </div>
                         </div>
@@ -842,112 +813,6 @@ const LandingPage = () => {
                       </div>
                     )}
                   </div>
-
-                  {/* Promo Code Section - Now positioned below the invoice */}
-                  {formData.selectedServices.length > 0 && (
-                    <div className="bg-gray-50 rounded-lg p-6 shadow-sm">
-                      <h3 className="font-medium text-gray-900 mb-3">
-                        Gunakan Kode Promo
-                      </h3>
-                      <div className="flex">
-                        <input
-                          type="text"
-                          value={formData.promoCode}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              promoCode: e.target.value,
-                            })
-                          }
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
-                          placeholder="Masukkan kode promo"
-                        />
-                        <button
-                          type="button"
-                          onClick={applyPromoCode}
-                          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-r-md text-sm"
-                        >
-                          Terapkan
-                        </button>
-                      </div>
-                      {formData.appliedPromo && (
-                        <div className="mt-3 p-2 bg-green-50 rounded-md flex justify-between items-center">
-                          <div>
-                            <p className="text-sm font-medium text-green-800">
-                              Promo {formData.appliedPromo.code} berhasil
-                              diterapkan
-                            </p>
-                            <p className="text-xs text-green-600">
-                              Diskon{" "}
-                              {formData.appliedPromo.discountType ===
-                              "percentage"
-                                ? `${formData.appliedPromo.value}%`
-                                : `Rp${formData.appliedPromo.value.toLocaleString()}`}
-                            </p>
-                          </div>
-                          <button
-                            onClick={removePromoCode}
-                            className="text-red-500 hover:text-red-700 p-1"
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="h-4 w-4"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M6 18L18 6M6 6l12 12"
-                              />
-                            </svg>
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Date Info and Submit Button */}
-                  {formData.selectedServices.length > 0 && (
-                    <div className="space-y-4">
-                      <div className="p-3 bg-blue-50 rounded-lg flex items-center">
-                        <svg
-                          className="h-5 w-5 text-blue-500 mr-2"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                          />
-                        </svg>
-                        <span className="text-sm">
-                          {selectedDate
-                            ? format(selectedDate, "dd MMMM yyyy")
-                            : "Belum memilih tanggal"}
-                        </span>
-                      </div>
-
-                      <button
-                        type="submit"
-                        disabled={!selectedDate}
-                        className={`w-full py-3 px-4 rounded-md text-white font-medium ${
-                          !selectedDate
-                            ? "bg-gray-400 cursor-not-allowed"
-                            : "bg-green-600 hover:bg-green-700"
-                        } focus:outline-none focus:ring-2 focus:ring-green-500`}
-                      >
-                        {formData.checkOnly
-                          ? "Booking Pemeriksaan"
-                          : "Konfirmasi Booking"}
-                      </button>
-                    </div>
-                  )}
                 </div>
               </div>
             </form>
@@ -980,24 +845,26 @@ const LandingPage = () => {
                   <div className="h-48 overflow-hidden">
                     <img
                       src={promo.image}
-                      alt={promo.title}
+                      alt={promo.nama}
                       className="w-full h-full object-cover"
                     />
                   </div>
                   <div className="p-6">
                     <h3 className="text-xl font-bold text-gray-900 mb-2">
-                      {promo.title}
+                      {promo.nama}
                     </h3>
                     <p className="text-gray-600 mb-4">{promo.description}</p>
                     <div className="flex justify-between items-center">
                       <div>
                         <p className="text-sm text-gray-500">Berlaku hingga:</p>
                         <p className="text-sm font-medium text-gray-700">
-                          {promo.validUntil}
+                          {promo.berlaku_sampai}
                         </p>
                       </div>
                       <div className="bg-blue-100 px-3 py-1 rounded-md">
-                        <p className="text-blue-800 font-bold">{promo.code}</p>
+                        <p className="text-blue-800 font-bold">
+                          {promo.kode_promo}
+                        </p>
                       </div>
                     </div>
                   </div>
