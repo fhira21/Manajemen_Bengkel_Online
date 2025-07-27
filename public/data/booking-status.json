@@ -1,9 +1,0 @@
-{
-  "labels": ["In Progress", "Completed", "Cancelled"],
-  "datasets": [
-    {
-      "data": [3, 0, 0],
-      "backgroundColor": ["#F59E0B", "#10B981", "#EF4444"]
-    }
-  ]
-}

@@ -1,536 +1,321 @@
 import React, { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import SidebarAdmin from "../../components/SidebarAdmin";
+import { supabase } from "../../lib/supabaseClient";
 
 const ManajemenSparepart = () => {
   const [spareparts, setSpareparts] = useState([]);
+  const [sortFilter, setSortFilter] = useState("");
   const [search, setSearch] = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const [editing, setEditing] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [newSparepart, setNewSparepart] = useState({
-    id_sparepart: "",
+
+  const [formData, setFormData] = useState({
     nama: "",
-    kode: "",
     harga: "",
     stok: "",
-    updated_at: new Date().toISOString(),
+    deskripsi: "",
   });
-  const [formErrors, setFormErrors] = useState({});
-  const itemsPerPage = 10;
 
-  // Load data from localStorage on initial render
-  useEffect(() => {
-    const fetchSpareparts = () => {
-      try {
-        setIsLoading(true);
-        const savedSpareparts = localStorage.getItem("spareparts");
-        
-        if (savedSpareparts) {
-          setSpareparts(JSON.parse(savedSpareparts));
-        } else {
-          // If no data in localStorage, load from JSON (initial data)
-          fetch("/data/spareparts.json")
-            .then((res) => res.json())
-            .then((data) => {
-              setSpareparts(data);
-              localStorage.setItem("spareparts", JSON.stringify(data));
-            });
-        }
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const fetchSpareparts = async () => {
+    setIsLoading(true);
+    let query = supabase.from("spareparts").select("*");
 
-    fetchSpareparts();
-  }, []);
-
-  // Save to localStorage whenever spareparts change
-  useEffect(() => {
-    if (spareparts.length > 0) {
-      localStorage.setItem("spareparts", JSON.stringify(spareparts));
+    if (sortFilter === "termurah") {
+      query = query.order("harga", { ascending: true });
+    } else if (sortFilter === "termahal") {
+      query = query.order("harga", { ascending: false });
     }
-  }, [spareparts]);
 
-  const filteredSpareparts = spareparts.filter((sp) =>
-    sp.nama.toLowerCase().includes(search.toLowerCase())
+    const { data, error } = await query;
+    if (!error) {
+      setSpareparts(data);
+    } else {
+      console.error("Gagal mengambil data:", error.message);
+    }
+    setIsLoading(false);
+  };
+
+  useEffect(() => {
+    fetchSpareparts();
+  }, [sortFilter]);
+
+  const openModal = (item = null) => {
+    if (item) {
+      setEditing(item);
+      setFormData({
+        nama: item.nama,
+        harga: item.harga,
+        stok: item.stok,
+        deskripsi: item.deskripsi || "",
+      });
+    } else {
+      setEditing(null);
+      setFormData({ nama: "", harga: "", stok: "", deskripsi: "" });
+    }
+    setShowModal(true);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setEditing(null);
+    setFormData({ nama: "", harga: "", stok: "", deskripsi: "" });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (editing) {
+      const { error } = await supabase
+        .from("spareparts")
+        .update({
+          nama: formData.nama,
+          harga: Number(formData.harga),
+          stok: Number(formData.stok),
+          deskripsi: formData.deskripsi,
+        })
+        .eq("id", editing.id);
+      if (!error) {
+        fetchSpareparts();
+        closeModal();
+      } else alert("Gagal memperbarui: " + error.message);
+    } else {
+      const { error } = await supabase.from("spareparts").insert([
+        {
+          nama: formData.nama,
+          harga: Number(formData.harga),
+          stok: Number(formData.stok),
+          deskripsi: formData.deskripsi,
+        },
+      ]);
+      if (!error) {
+        fetchSpareparts();
+        closeModal();
+      } else alert("Gagal menambah: " + error.message);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!id) return;
+    const konfirmasi = window.confirm("Yakin ingin menghapus sparepart ini?");
+    if (!konfirmasi) return;
+
+    const { error } = await supabase.from("spareparts").delete().eq("id", id);
+    if (!error) setSpareparts((prev) => prev.filter((s) => s.id !== id));
+    else alert("Gagal menghapus: " + error.message);
+  };
+
+  const filteredData = spareparts.filter(
+    (item) =>
+      item.nama?.toLowerCase().includes(search.toLowerCase()) ||
+      item.deskripsi?.toLowerCase().includes(search.toLowerCase())
   );
 
-  // Pagination logic
-  const totalPages = Math.ceil(filteredSpareparts.length / itemsPerPage);
-  const paginatedSpareparts = filteredSpareparts.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-  const formatCurrency = (value) => {
+  const formatPrice = (price) => {
     return new Intl.NumberFormat("id-ID", {
       style: "currency",
       currency: "IDR",
       minimumFractionDigits: 0,
-    }).format(value);
+    }).format(price);
   };
 
-  const getStockStatus = (quantity) => {
-    if (quantity <= 0) return "text-red-600 bg-red-50";
-    if (quantity <= 5) return "text-yellow-600 bg-yellow-50";
-    return "text-green-600 bg-green-50";
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setNewSparepart({
-      ...newSparepart,
-      [name]: value,
-    });
-  };
-
-  const validateForm = () => {
-    const errors = {};
-    if (!newSparepart.nama) errors.nama = "Nama sparepart harus diisi";
-    if (!newSparepart.kode) errors.kode = "Kode sparepart harus diisi";
-    if (!newSparepart.harga || isNaN(newSparepart.harga)) errors.harga = "Harga harus angka";
-    if (!newSparepart.stok || isNaN(newSparepart.stok)) errors.stok = "Stok harus angka";
-    
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    if (!validateForm()) return;
-
-    const newId = spareparts.length > 0 
-      ? Math.max(...spareparts.map(sp => sp.id_sparepart)) + 1 
-      : 1;
-
-    const sparepartToAdd = {
-      ...newSparepart,
-      id_sparepart: newId,
-      harga: parseInt(newSparepart.harga),
-      stok: parseInt(newSparepart.stok),
-      updated_at: new Date().toISOString(),
-    };
-
-    setSpareparts([...spareparts, sparepartToAdd]);
-    setShowAddModal(false);
-    resetForm();
-  };
-
-  const resetForm = () => {
-    setNewSparepart({
-      id_sparepart: "",
-      nama: "",
-      kode: "",
-      harga: "",
-      stok: "",
-      updated_at: new Date().toISOString(),
-    });
-    setFormErrors({});
-  };
-
-  const handleDelete = (id) => {
-    if (window.confirm("Apakah Anda yakin ingin menghapus sparepart ini?")) {
-      const updatedSpareparts = spareparts.filter(sp => sp.id_sparepart !== id);
-      setSpareparts(updatedSpareparts);
-    }
+  const getStockColor = (stok) => {
+    if (stok <= 0) return "bg-red-100 text-red-800";
+    if (stok <= 5) return "bg-yellow-100 text-yellow-800";
+    return "bg-green-100 text-green-800";
   };
 
   return (
-    <div className="flex flex-col md:flex-row">
+    <div className="flex">
       <SidebarAdmin />
-
-      <main className="flex-1 p-4 md:p-6 bg-gray-50 min-h-screen">
-        <div className="max-w-7xl mx-auto">
+      <main className="flex-1 md:ml-64 p-4">
+        <div className="max-w-full mx-auto">
           {/* Header Section */}
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Manajemen Sparepart</h1>
-              <p className="text-gray-600 mt-1">
-                Kelola data sparepart bengkel
-              </p>
-            </div>
-            <div className="mt-4 md:mt-0">
-              <button 
-                onClick={() => setShowAddModal(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 mr-2"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                Tambah Sparepart
-              </button>
-            </div>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Manajemen Sparepart</h1>
+            <button
+              onClick={() => openModal()}
+              className="px-4 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-l flex items-center gap-1"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
+              </svg>
+              Tambah Sparepart
+            </button>
           </div>
 
-          {/* Search and Filter Section */}
-          <div className="bg-white p-4 rounded-lg shadow-sm mb-6">
-            <div className="flex flex-col md:flex-row md:items-center gap-4">
+          {/* Filter Section */}
+          <div className="bg-white p-3 rounded-md shadow-xs border border-gray-200 mb-4">
+            <div className="flex flex-col md:flex-row md:items-center gap-3">
               <div className="flex-1">
-                <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-1">
-                  Cari Sparepart
-                </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg
-                      className="h-5 w-5 text-gray-400"
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-                        clipRule="evenodd"
-                      />
+                    <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                   </div>
                   <input
-                    id="search"
                     type="text"
-                    placeholder="Cari berdasarkan nama sparepart..."
+                    placeholder="Cari sparepart..."
+                    className="w-full border border-gray-300 rounded pl-9 pr-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                     value={search}
-                    onChange={(e) => {
-                      setSearch(e.target.value);
-                      setCurrentPage(1);
-                    }}
-                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    onChange={(e) => setSearch(e.target.value)}
                   />
                 </div>
+              </div>
+              <div className="w-full md:w-40">
+                <select
+                  value={sortFilter}
+                  onChange={(e) => setSortFilter(e.target.value)}
+                  className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                  <option value="">Semua</option>
+                  <option value="termurah">Termurah</option>
+                  <option value="termahal">Termahal</option>
+                </select>
               </div>
             </div>
           </div>
 
           {/* Table Section */}
-          <div className="bg-white border rounded-lg shadow-sm overflow-hidden">
+          <div className="bg-white border border-gray-200 rounded-md shadow-xs overflow-hidden">
             {isLoading ? (
-              <div className="p-8 text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
-                <p className="mt-4 text-gray-600">Memuat data sparepart...</p>
+              <div className="p-4 text-center text-sm text-gray-500">
+                Memuat data sparepart...
               </div>
-            ) : error ? (
-              <div className="p-8 text-center text-red-500">
-                <p>{error}</p>
-                <button
-                  onClick={() => window.location.reload()}
-                  className="mt-2 text-blue-600 hover:text-blue-800"
-                >
-                  Coba lagi
-                </button>
+            ) : filteredData.length === 0 ? (
+              <div className="p-4 text-center text-sm text-gray-500">
+                Tidak ada data sparepart ditemukan
               </div>
             ) : (
-              <>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          ID
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Nama Sparepart
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Harga
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Stok
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Terakhir Diupdate
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Aksi
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {paginatedSpareparts.length > 0 ? (
-                        paginatedSpareparts.map((sp) => (
-                          <tr key={sp.id_sparepart} className="hover:bg-gray-50">
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                              {sp.id_sparepart}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm font-medium text-gray-900">{sp.nama}</div>
-                              <div className="text-sm text-gray-500">{sp.kode}</div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                              {formatCurrency(sp.harga)}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span
-                                className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStockStatus(
-                                  sp.stok
-                                )}`}
-                              >
-                                {sp.stok} pcs
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                              {new Date(sp.updated_at).toLocaleString("id-ID", {
-                                day: "2-digit",
-                                month: "short",
-                                year: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                              <button className="text-blue-600 hover:text-blue-900 mr-3">
-                                Edit
-                              </button>
-                              <button 
-                                onClick={() => handleDelete(sp.id_sparepart)}
-                                className="text-red-600 hover:text-red-900"
-                              >
-                                Hapus
-                              </button>
-                            </td>
-                          </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td
-                            colSpan="6"
-                            className="px-6 py-4 text-center text-sm text-gray-500"
-                          >
-                            Tidak ada sparepart yang ditemukan.
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Pagination */}
-                {filteredSpareparts.length > 0 && (
-                  <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-                    <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                      <div>
-                        <p className="text-sm text-gray-700">
-                          Menampilkan{" "}
-                          <span className="font-medium">
-                            {(currentPage - 1) * itemsPerPage + 1}
-                          </span>{" "}
-                          sampai{" "}
-                          <span className="font-medium">
-                            {Math.min(currentPage * itemsPerPage, filteredSpareparts.length)}
-                          </span>{" "}
-                          dari <span className="font-medium">{filteredSpareparts.length}</span>{" "}
-                          hasil
-                        </p>
-                      </div>
-                      <div>
-                        <nav
-                          className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
-                          aria-label="Pagination"
-                        >
-                          <button
-                            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                            disabled={currentPage === 1}
-                            className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium ${
-                              currentPage === 1
-                                ? "text-gray-300 cursor-not-allowed"
-                                : "text-gray-500 hover:bg-gray-50"
-                            }`}
-                          >
-                            <span className="sr-only">Previous</span>
-                            <svg
-                              className="h-5 w-5"
-                              xmlns="http://www.w3.org/2000/svg"
-                              viewBox="0 0 20 20"
-                              fill="currentColor"
-                              aria-hidden="true"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                          </button>
-                          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200 text-sm">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-2 text-left font-medium text-gray-700">No</th>
+                      <th className="px-4 py-2 text-left font-medium text-gray-700">Nama</th>
+                      <th className="px-4 py-2 text-left font-medium text-gray-700">Deskripsi</th>
+                      <th className="px-4 py-2 text-left font-medium text-gray-700">Harga</th>
+                      <th className="px-4 py-2 text-left font-medium text-gray-700">Stok</th>
+                      <th className="px-4 py-2 text-left font-medium text-gray-700">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {filteredData.map((item, index) => (
+                      <tr key={item.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-2 whitespace-nowrap">{index + 1}</td>
+                        <td className="px-4 py-2 whitespace-nowrap font-medium">{item.nama}</td>
+                        <td className="px-4 py-2 max-w-xs truncate">{item.deskripsi || '-'}</td>
+                        <td className="px-4 py-2 whitespace-nowrap">{formatPrice(item.harga)}</td>
+                        <td className="px-4 py-2 whitespace-nowrap">
+                          <span className={`px-2 py-1 rounded-full text-xs ${getStockColor(item.stok)}`}>
+                            {item.stok} pcs
+                          </span>
+                        </td>
+                        <td className="px-4 py-2 whitespace-nowrap">
+                          <div className="flex gap-2">
                             <button
-                              key={page}
-                              onClick={() => setCurrentPage(page)}
-                              className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                                currentPage === page
-                                  ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
-                                  : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
-                              }`}
+                              onClick={() => openModal(item)}
+                              className="text-blue-600 hover:text-blue-800 text-sm flex items-center gap-1"
                             >
-                              {page}
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                              Edit
                             </button>
-                          ))}
-                          <button
-                            onClick={() =>
-                              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                            }
-                            disabled={currentPage === totalPages}
-                            className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium ${
-                              currentPage === totalPages
-                                ? "text-gray-300 cursor-not-allowed"
-                                : "text-gray-500 hover:bg-gray-50"
-                            }`}
-                          >
-                            <span className="sr-only">Next</span>
-                            <svg
-                              className="h-5 w-5"
-                              xmlns="http://www.w3.org/2000/svg"
-                              viewBox="0 0 20 20"
-                              fill="currentColor"
-                              aria-hidden="true"
+                            <button
+                              onClick={() => handleDelete(item.id)}
+                              className="text-red-600 hover:text-red-800 text-sm flex items-center gap-1"
                             >
-                              <path
-                                fillRule="evenodd"
-                                d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                          </button>
-                        </nav>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </>
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                              Hapus
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
         </div>
 
-        {/* Add Sparepart Modal */}
-        {showAddModal && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-              <div className="p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Tambah Sparepart Baru</h3>
-                  <button
-                    onClick={() => {
-                      setShowAddModal(false);
-                      resetForm();
-                    }}
-                    className="text-gray-400 hover:text-gray-500"
-                  >
-                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
+        {/* Modal Form */}
+        <AnimatePresence>
+          {showModal && (
+            <div className="fixed inset-0 z-50 bg-black bg-opacity-40 flex justify-center items-center p-4">
+              <div className="bg-white rounded-md shadow-lg w-full max-w-md">
+                <div className="p-4 border-b border-gray-200">
+                  <h2 className="text-lg font-semibold text-gray-800">
+                    {editing ? "Edit Sparepart" : "Tambah Sparepart"}
+                  </h2>
                 </div>
-
-                <form onSubmit={handleSubmit}>
-                  <div className="mb-4">
-                    <label htmlFor="nama" className="block text-sm font-medium text-gray-700 mb-1">
-                      Nama Sparepart <span className="text-red-500">*</span>
-                    </label>
+                <form onSubmit={handleSubmit} className="p-4 space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Nama</label>
                     <input
                       type="text"
-                      id="nama"
-                      name="nama"
-                      value={newSparepart.nama}
-                      onChange={handleInputChange}
-                      className={`block w-full px-3 py-2 border ${
-                        formErrors.nama ? "border-red-500" : "border-gray-300"
-                      } rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
+                      placeholder="Nama sparepart"
+                      value={formData.nama}
+                      onChange={(e) => setFormData({ ...formData, nama: e.target.value })}
+                      required
+                      className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
-                    {formErrors.nama && (
-                      <p className="mt-1 text-sm text-red-600">{formErrors.nama}</p>
-                    )}
                   </div>
-
-                  <div className="mb-4">
-                    <label htmlFor="kode" className="block text-sm font-medium text-gray-700 mb-1">
-                      Kode Sparepart <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      id="kode"
-                      name="kode"
-                      value={newSparepart.kode}
-                      onChange={handleInputChange}
-                      className={`block w-full px-3 py-2 border ${
-                        formErrors.kode ? "border-red-500" : "border-gray-300"
-                      } rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
-                    />
-                    {formErrors.kode && (
-                      <p className="mt-1 text-sm text-red-600">{formErrors.kode}</p>
-                    )}
-                  </div>
-
-                  <div className="mb-4">
-                    <label htmlFor="harga" className="block text-sm font-medium text-gray-700 mb-1">
-                      Harga (Rp) <span className="text-red-500">*</span>
-                    </label>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Harga</label>
                     <input
                       type="number"
-                      id="harga"
-                      name="harga"
-                      value={newSparepart.harga}
-                      onChange={handleInputChange}
-                      className={`block w-full px-3 py-2 border ${
-                        formErrors.harga ? "border-red-500" : "border-gray-300"
-                      } rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
+                      placeholder="Harga"
+                      value={formData.harga}
+                      onChange={(e) => setFormData({ ...formData, harga: e.target.value })}
+                      required
+                      className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
-                    {formErrors.harga && (
-                      <p className="mt-1 text-sm text-red-600">{formErrors.harga}</p>
-                    )}
                   </div>
-
-                  <div className="mb-4">
-                    <label htmlFor="stok" className="block text-sm font-medium text-gray-700 mb-1">
-                      Stok <span className="text-red-500">*</span>
-                    </label>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Stok</label>
                     <input
                       type="number"
-                      id="stok"
-                      name="stok"
-                      value={newSparepart.stok}
-                      onChange={handleInputChange}
-                      className={`block w-full px-3 py-2 border ${
-                        formErrors.stok ? "border-red-500" : "border-gray-300"
-                      } rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
+                      placeholder="Jumlah stok"
+                      value={formData.stok}
+                      onChange={(e) => setFormData({ ...formData, stok: e.target.value })}
+                      required
+                      className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
-                    {formErrors.stok && (
-                      <p className="mt-1 text-sm text-red-600">{formErrors.stok}</p>
-                    )}
                   </div>
-
-                  <div className="flex justify-end space-x-3 mt-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Deskripsi</label>
+                    <textarea
+                      placeholder="Deskripsi sparepart"
+                      value={formData.deskripsi}
+                      onChange={(e) => setFormData({ ...formData, deskripsi: e.target.value })}
+                      className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 min-h-[80px]"
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2 pt-4">
                     <button
                       type="button"
-                      onClick={() => {
-                        setShowAddModal(false);
-                        resetForm();
-                      }}
-                      className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      onClick={closeModal}
+                      className="px-3 py-1.5 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 text-sm"
                     >
                       Batal
                     </button>
                     <button
                       type="submit"
-                      className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      className="px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
                     >
-                      Simpan
+                      {editing ? "Simpan" : "Tambah"}
                     </button>
                   </div>
                 </form>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </AnimatePresence>
       </main>
     </div>
   );

@@ -1,357 +1,278 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { supabase } from "../../lib/supabaseClient";
+import { FiPackage, FiPlus } from "react-icons/fi";
+import { motion } from "framer-motion";
+import SidebarGudang from "../../components/SideBarGudang";
 
-const SparepartKeluar = () => {
-  const [dataKeluar, setDataKeluar] = useState([]);
+export default function ManajemenSparepartKeluar() {
+  const [data, setData] = useState([]);
   const [spareparts, setSpareparts] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [filterTanggal, setFilterTanggal] = useState("");
-  const [form, setForm] = useState({
-    id_sparepart: "",
-    jumlah: 1,
-    tanggal: new Date().toISOString().split("T")[0],
-    id_user: "",
-    keterangan: "",
-  });
+  const [users, setUsers] = useState([]);
   const [showModal, setShowModal] = useState(false);
+  const [form, setForm] = useState({
+    sparepart_id: "",
+    jumlah_stok: 0,
+    keterangan: "",
+    tgl: "",
+    dikelola_oleh: "",
+    tipe: "keluar",
+  });
 
-  useEffect(() => {
-    Promise.all([
-      fetch("/data/sparepart_keluar.json").then((res) => res.json()),
-      fetch("/data/spareparts.json").then((res) => res.json()),
-      fetch("/data/userData.json").then((res) => res.json()),
-    ]).then(([keluar, spareparts, usersData]) => {
-      setDataKeluar(keluar);
-      setSpareparts(spareparts);
-      setUsers(usersData);
-      setIsLoading(false);
-    });
-  }, []);
+  // Fetch sparepart keluar
+  const fetchData = async () => {
+    const { data, error } = await supabase
+      .from("sparepart_stok")
+      .select(
+        `
+      id,
+      jumlah_stok,
+      keterangan,
+      tgl,
+      tipe,
+      spareparts:sparepart_id (
+        nama
+      ),
+      users:dikelola_oleh (
+        nama_lengkap
+      )
+    `
+      )
+      .eq("tipe", "keluar");
 
-  const getNamaSparepart = (id) =>
-    spareparts.find((s) => s.id_sparepart === id)?.nama || "-";
-  const getNamaUser = (id) => users.find((u) => u.id_user === id)?.nama || "-";
-  const getRoleUser = (id) => users.find((u) => u.id_user === id)?.role || "-";
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const newItem = {
-      id_keluar: dataKeluar.length + 1,
-      id_sparepart: parseInt(form.id_sparepart),
-      jumlah: parseInt(form.jumlah),
-      tanggal: form.tanggal,
-      id_user: parseInt(form.id_user),
-      keterangan: form.keterangan,
-    };
-    setDataKeluar((prev) => [...prev, newItem]);
-    setForm({
-      id_sparepart: "",
-      jumlah: 1,
-      tanggal: new Date().toISOString().split("T")[0],
-      id_user: "",
-      keterangan: "",
-    });
-    setShowModal(false);
+    if (error) {
+      console.error("Gagal fetch data:", error.message);
+    } else {
+      setData(data);
+    }
   };
 
-  const filtered = dataKeluar.filter((item) => {
-    const namaSparepart = getNamaSparepart(item.id_sparepart).toLowerCase();
-    const namaUser = getNamaUser(item.id_user).toLowerCase();
-    const matchSearch =
-      namaSparepart.includes(search.toLowerCase()) ||
-      namaUser.includes(search.toLowerCase());
-    const matchTanggal = !filterTanggal || item.tanggal === filterTanggal;
-    return matchSearch && matchTanggal;
-  });
+  const fetchDropdowns = async () => {
+    const [sparepartsRes, userRes] = await Promise.all([
+      supabase.from("spareparts").select("id, nama"),
+      supabase.from("users").select("id, nama_lengkap"),
+    ]);
+    if (sparepartsRes.data) setSpareparts(sparepartsRes.data);
+    if (userRes.data) setUsers(userRes.data);
+  };
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    fetchData();
+    fetchDropdowns();
+  }, []);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
+  };
+
+  const handleSubmit = async () => {
+    if (
+      !form.sparepart_id ||
+      !form.jumlah_stok ||
+      !form.tgl ||
+      !form.dikelola_oleh
+    ) {
+      alert("Mohon lengkapi semua data!");
+      return;
+    }
+    const { error } = await supabase.from("sparepart_stok").insert([form]);
+    if (error) {
+      alert("Gagal menambahkan data: " + error.message);
+    } else {
+      alert("Data berhasil ditambahkan!");
+      fetchData();
+      setShowModal(false);
+      setForm({
+        sparepart_id: "",
+        jumlah_stok: 0,
+        keterangan: "",
+        tgl: "",
+        dikelola_oleh: "",
+        tipe: "keluar",
+      });
+    }
+  };
 
   return (
-    <div className="container mx-auto px-4 py-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4 md:mb-0">
-          Sparepart Keluar
-        </h2>
-        <button
-          onClick={() => setShowModal(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5 mr-1"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-          >
-            <path
-              fillRule="evenodd"
-              d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
-              clipRule="evenodd"
-            />
-          </svg>
-          Tambah Data
-        </button>
-      </div>
-
-      {/* Modal Popup */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-semibold text-gray-800">
-                  Tambah Sparepart Keluar
-                </h3>
-                <button
-                  onClick={() => setShowModal(false)}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-6 w-6"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
-              </div>
-
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Sparepart*
-                    </label>
-                    <select
-                      value={form.id_sparepart}
-                      onChange={(e) =>
-                        setForm({ ...form, id_sparepart: e.target.value })
-                      }
-                      required
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">Pilih Sparepart</option>
-                      {spareparts.map((sp) => (
-                        <option key={sp.id_sparepart} value={sp.id_sparepart}>
-                          {sp.nama}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Jumlah*
-                    </label>
-                    <input
-                      type="number"
-                      min={1}
-                      value={form.jumlah}
-                      onChange={(e) =>
-                        setForm({ ...form, jumlah: e.target.value })
-                      }
-                      required
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Jumlah"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Tanggal
-                    </label>
-                    <input
-                      type="date"
-                      value={form.tanggal}
-                      onChange={(e) =>
-                        setForm({ ...form, tanggal: e.target.value })
-                      }
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Pengambil*
-                    </label>
-                    <select
-                      value={form.id_user}
-                      onChange={(e) =>
-                        setForm({ ...form, id_user: e.target.value })
-                      }
-                      required
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">Pilih Pengambil</option>
-                      {users.map((u) => (
-                        <option key={u.id_user} value={u.id_user}>
-                          {u.nama} ({u.role})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Keterangan
-                  </label>
-                  <input
-                    type="text"
-                    value={form.keterangan}
-                    onChange={(e) =>
-                      setForm({ ...form, keterangan: e.target.value })
-                    }
-                    placeholder="Keterangan"
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div className="flex justify-end space-x-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={() => setShowModal(false)}
-                    className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-                  >
-                    Batal
-                  </button>
-                  <button
-                    type="submit"
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md"
-                  >
-                    Simpan Data
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
+    <div className="flex">
+      <SidebarGudang />
+      <main className="flex-1 md:ml-64 p-4">
+        <div className="flex justify-between items-center mb-6"> {/* Increased margin-bottom */}
+          <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-3"> {/* Increased gap */}
+            <FiPackage className="text-blue-500 text-3xl" /> {/* Larger icon */}
+            Manajemen Sparepart Keluar
+          </h2>
         </div>
-      )}
 
-      {/* Search and Filter Section */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div className="w-full md:w-1/2">
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 text-gray-400"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
+        {/* Search dan Tambah - Enlarged */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="bg-white rounded-xl shadow-md p-6 mb-6"
+        >
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6"> {/* Increased gap */}
+            <div className="flex gap-4 flex-1"> {/* Increased gap */}
               <input
                 type="text"
-                placeholder="Cari sparepart atau pengambil..."
+                placeholder="Cari sparepart..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="border border-gray-300 rounded-lg px-4 py-3 w-full text-lg"
               />
             </div>
+            <div className="flex items-end">
+              <button
+                onClick={() => setShowModal(true)}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg flex items-center justify-center gap-3 text-lg"
+              >
+                <FiPlus size={20} /> {/* Larger icon */}
+                Tambah Data
+              </button>
+            </div>
           </div>
-          <div className="w-full md:w-auto">
-            <input
-              type="date"
-              value={filterTanggal}
-              onChange={(e) => setFilterTanggal(e.target.value)}
-              className="w-full md:w-auto border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-        </div>
-      </div>
+        </motion.div>
 
-      {/* Data Table */}
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Table with increased spacing */}
+        <div className="overflow-x-auto bg-white rounded-xl shadow-lg"> {/* Larger shadow */}
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  ID
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Sparepart
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Jumlah
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Tanggal
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Pengambil
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Keterangan
-                </th>
+                <th className="px-8 py-5 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">No</th>
+                <th className="px-8 py-5 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Sparepart</th>
+                <th className="px-8 py-5 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Jumlah</th>
+                <th className="px-8 py-5 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Tanggal</th>
+                <th className="px-8 py-5 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">User</th>
+                <th className="px-8 py-5 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Keterangan</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filtered.map((item) => (
-                <tr key={item.id_keluar} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {item.id_keluar}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {getNamaSparepart(item.id_sparepart)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {item.jumlah}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {item.tanggal}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <div className="flex flex-col">
-                      <span className="font-medium">
-                        {getNamaUser(item.id_user)}
-                      </span>
-                      <span className="text-xs text-gray-400">
-                        {getRoleUser(item.id_user)}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {item.keterangan || "-"}
-                  </td>
-                </tr>
-              ))}
-              {filtered.length === 0 && (
+              {data.length > 0 ? (
+                data.map((d, i) => (
+                  <tr key={d.id} className="hover:bg-gray-50">
+                    <td className="px-8 py-6 whitespace-nowrap text-base text-gray-500"> {/* Larger text and padding */}
+                      {i + 1}
+                    </td>
+                    <td className="px-8 py-6 whitespace-nowrap text-base font-medium text-gray-900">
+                      {d.spareparts?.nama || "-"}
+                    </td>
+                    <td className="px-8 py-6 whitespace-nowrap text-base text-gray-500">
+                      {d.jumlah_stok}
+                    </td>
+                    <td className="px-8 py-6 whitespace-nowrap text-base text-gray-500">
+                      {d.tgl}
+                    </td>
+                    <td className="px-8 py-6 whitespace-nowrap text-base text-gray-500">
+                      {d.users?.nama_lengkap || "-"}
+                    </td>
+                    <td className="px-8 py-6 whitespace-nowrap text-base text-gray-500">
+                      {d.keterangan}
+                    </td>
+                  </tr>
+                ))
+              ) : (
                 <tr>
-                  <td
-                    colSpan="6"
-                    className="px-6 py-4 text-center text-sm text-gray-500"
-                  >
-                    Tidak ada data yang ditemukan
+                  <td colSpan="6" className="px-8 py-6 whitespace-nowrap text-base text-gray-500 text-center">
+                    Belum ada data
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
-      </div>
+
+        {/* Modal Tambah */}
+        {showModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center z-50">
+            <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-lg">
+              <h3 className="text-lg font-semibold mb-4">
+                Tambah Sparepart Keluar
+              </h3>
+
+              <div className="grid gap-3">
+                <div>
+                  <label className="text-sm">Sparepart</label>
+                  <select
+                    name="sparepart_id"
+                    value={form.sparepart_id}
+                    onChange={handleChange}
+                    className="w-full border px-2 py-1 rounded"
+                  >
+                    <option value="">Pilih Sparepart</option>
+                    {spareparts.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.nama}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-sm">Jumlah Stok</label>
+                  <input
+                    name="jumlah_stok"
+                    type="number"
+                    value={form.jumlah_stok}
+                    onChange={handleChange}
+                    className="w-full border px-2 py-1 rounded"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm">Keterangan</label>
+                  <input
+                    name="keterangan"
+                    value={form.keterangan}
+                    onChange={handleChange}
+                    className="w-full border px-2 py-1 rounded"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm">Tanggal</label>
+                  <input
+                    type="date"
+                    name="tgl"
+                    value={form.tgl}
+                    onChange={handleChange}
+                    className="w-full border px-2 py-1 rounded"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm">Dikelola Oleh</label>
+                  <select
+                    name="dikelola_oleh"
+                    value={form.dikelola_oleh}
+                    onChange={handleChange}
+                    className="w-full border px-2 py-1 rounded"
+                  >
+                    <option value="">Pilih Karyawan</option>
+                    {users.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.nama_lengkap}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-2 mt-4">
+                <button
+                  variant="outline"
+                  onClick={() => setShowModal(false)}
+                  className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleSubmit}
+                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                >
+                  Simpan
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
     </div>
   );
-};
-
-export default SparepartKeluar;
+}

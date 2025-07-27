@@ -1,110 +1,142 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { 
-  FaBars, 
-  FaTimes, 
-  FaTachometerAlt, 
-  FaSignInAlt, 
-  FaSignOutAlt,
-  FaWarehouse,
-  FaPowerOff
-} from "react-icons/fa";
+  FiHome, FiLogOut, FiMenu, FiX, FiCheck, FiUser,
+  FiArrowDownCircle, FiArrowUpCircle, FiPackage 
+} from "react-icons/fi";
 
-const SidebarGudang = ({ activeMenu, setActiveMenu }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+const SidebarGudang = () => {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [activeMenu, setActiveMenu] = useState("");
+
+  useEffect(() => {
+    const path = location.pathname;
+    if (path.includes("masuk")) setActiveMenu("masuk");
+    else if (path.includes("keluar")) setActiveMenu("keluar");
+    else setActiveMenu("dashboard");
+  }, [location]);
 
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
-      if (window.innerWidth >= 768) {
-        setIsOpen(true);
-      } else {
-        setIsOpen(false);
-      }
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      setSidebarOpen(!mobile);
     };
 
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  const menuItems = [
+    { 
+      path: "/dashboardgudang",
+      name: "Dashboard",
+      icon: <FiHome className="text-lg" />,
+      key: "dashboard"
+    },
+    { 
+      path: "/gudang/masuk",
+      name: "Stok Masuk",
+      icon: <FiArrowDownCircle className="text-lg" />,
+      key: "masuk"
+    },
+    { 
+      path: "/gudang/keluar",
+      name: "Stok Keluar",
+      icon: <FiArrowUpCircle className="text-lg" />,
+      key: "keluar"
+    }
+  ];
 
   const handleLogout = () => {
     localStorage.removeItem("currentUser");
-    window.location.href = "/";
+    navigate("/");
   };
 
-  const menuItems = [
-    { key: "dashboard", label: "Dashboard", icon: <FaTachometerAlt className="mr-3" /> },
-    { key: "masuk", label: "Stok Masuk", icon: <FaSignInAlt className="mr-3" /> },
-    { key: "keluar", label: "Stok Keluar", icon: <FaSignOutAlt className="mr-3" /> }
-  ];
-
-  const toggleSidebar = () => {
-    setIsOpen(!isOpen);
+  const handleNavigation = (path) => {
+    navigate(path);
+    if (isMobile) setSidebarOpen(false);
   };
 
   return (
     <>
-      {/* Mobile Hamburger Button */}
       {isMobile && (
         <button
-          onClick={toggleSidebar}
-          className="fixed z-50 top-4 left-4 p-2 rounded-md bg-gray-800 text-white shadow-lg"
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className={`fixed z-50 top-4 left-4 p-2 rounded-md bg-gray-800 text-white shadow-lg transition-all ${
+            sidebarOpen ? "transform rotate-90" : ""
+          }`}
         >
-          {isOpen ? <FaTimes size={20} /> : <FaBars size={20} />}
+          {sidebarOpen ? <FiX className="text-xl" /> : <FiMenu className="text-xl" />}
         </button>
       )}
 
-      {/* Sidebar */}
-      <aside
-        className={`fixed md:relative z-40 w-64 bg-gray-800 text-white min-h-screen transition-all duration-300 ease-in-out
-          ${isOpen ? 'left-0' : '-left-64'} md:left-0`}
-      >
-        <div className="p-4 flex items-center border-b border-gray-700">
-          <FaWarehouse className="text-2xl mr-2 text-blue-400" />
-          <h1 className="text-2xl font-bold">Gudang</h1>
-        </div>
-        
-        <nav className="p-4 space-y-2">
-          {menuItems.map(menu => (
-            <button
-              key={menu.key}
-              onClick={() => {
-                setActiveMenu(menu.key);
-                if (isMobile) setIsOpen(false);
-              }}
-              className={`w-full flex items-center px-4 py-3 rounded-lg transition-colors duration-200
-                ${activeMenu === menu.key 
-                  ? "bg-blue-600 text-white shadow-md" 
-                  : "hover:bg-gray-700 text-gray-300"}`}
-            >
-              {menu.icon}
-              {menu.label}
-            </button>
-          ))}
-        </nav>
-
-        {/* Sidebar Footer with Logout Button */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-700 bg-gray-900">
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center justify-center px-4 py-2 mb-2 rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors duration-200"
-          >
-            <FaPowerOff className="mr-2" />
-            Logout
-          </button>
-          <div className="text-sm text-gray-400">Bengkel Motor</div>
-          <div className="text-xs text-gray-500">v1.0.0</div>
-        </div>
-      </aside>
-
-      {/* Overlay for mobile */}
-      {isMobile && isOpen && (
-        <div 
-          onClick={toggleSidebar}
-          className="fixed inset-0 z-30 bg-black bg-opacity-50 md:hidden"
+      {isMobile && sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-30"
+          onClick={() => setSidebarOpen(false)}
         />
       )}
+
+      <aside
+        className={`fixed z-40 w-64 h-screen bg-gradient-to-b from-gray-800 to-gray-900 text-white flex flex-col transition-all duration-300 ease-in-out ${
+          sidebarOpen ? "left-0" : "-left-64 md:left-0"
+        }`}
+      >
+        <div className="flex flex-col h-full">
+          <div className="p-4 border-b border-gray-700 flex items-center justify-between">
+            <h2 className="text-xl font-bold flex items-center">
+              <span className="bg-gray-100 text-gray-900 rounded-lg p-1 mr-2">
+                <FiPackage />
+              </span>
+              Gudang Panel
+            </h2>
+          </div>
+
+          <nav className="flex-1 overflow-y-auto py-4">
+            <ul className="space-y-1 px-2">
+              {menuItems.map((item) => (
+                <li key={item.key}>
+                  <button
+                    onClick={() => handleNavigation(item.path)}
+                    className={`w-full flex items-center p-3 rounded-lg transition-all duration-200 ${
+                      activeMenu === item.key
+                        ? "bg-gray-700 shadow-md"
+                        : "hover:bg-gray-700 hover:shadow-md"
+                    }`}
+                  >
+                    <span className="mr-3">{item.icon}</span>
+                    <span className="font-medium">{item.name}</span>
+                    {activeMenu === item.key && <FiCheck className="ml-auto" />}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </nav>
+
+          <div className="p-4 border-t border-gray-700">
+            <div className="flex items-center mb-4 gap-3">
+              <div className="w-10 h-10 rounded-full bg-white bg-opacity-10 flex items-center justify-center">
+                <FiUser className="text-white" />
+              </div>
+              <div>
+                <p className="font-medium">Staff Gudang</p>
+                <p className="text-xs text-white text-opacity-70">Gudang Panel</p>
+              </div>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center justify-center p-3 bg-red-600 hover:bg-red-700 rounded-lg transition-all duration-200 shadow hover:shadow-md"
+            >
+              <FiLogOut className="mr-2" />
+              <span>Logout</span>
+            </button>
+          </div>
+        </div>
+      </aside>
     </>
   );
 };

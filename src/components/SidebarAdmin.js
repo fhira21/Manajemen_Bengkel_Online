@@ -1,26 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import {
-  FiHome,
-  FiUsers,
-  FiTag,
-  FiPackage,
-  FiTool,
-  FiUser,
-  FiLogOut,
-  FiMenu,
-  FiX,
-  FiCheck
+import { 
+  FiHome, FiUsers, FiTag, FiPackage, FiTool, 
+  FiUser, FiLogOut, FiMenu, FiX, FiCheck 
 } from "react-icons/fi";
 
 const SidebarAdmin = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
+  const navigate = useNavigate();
+  const location = useLocation();
   const [activeMenu, setActiveMenu] = useState("");
 
-  // Set active menu based on current path
   useEffect(() => {
     const path = location.pathname;
     if (path.includes("pelanggan")) setActiveMenu("pelanggan");
@@ -31,16 +22,11 @@ const SidebarAdmin = () => {
     else setActiveMenu("dashboard");
   }, [location]);
 
-  // Handle window resize
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
-      if (!mobile) {
-        setSidebarOpen(true);
-      } else {
-        setSidebarOpen(false);
-      }
+      setSidebarOpen(!mobile);
     };
 
     window.addEventListener("resize", handleResize);
@@ -86,6 +72,11 @@ const SidebarAdmin = () => {
     }
   ];
 
+  const handleLogout = () => {
+    localStorage.removeItem("currentUser");
+    navigate("/");
+  };
+
   const handleNavigation = (path) => {
     navigate(path);
     if (isMobile) setSidebarOpen(false);
@@ -93,7 +84,6 @@ const SidebarAdmin = () => {
 
   return (
     <>
-      {/* Mobile menu button */}
       {isMobile && (
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -105,40 +95,28 @@ const SidebarAdmin = () => {
         </button>
       )}
 
-      {/* Overlay for mobile */}
       {isMobile && sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40"
+          className="fixed inset-0 bg-black bg-opacity-50 z-30"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      {/* Sidebar */}
       <aside
-        className={`fixed md:relative z-40 w-64 h-screen bg-gradient-to-b from-blue-900 to-blue-800 text-white flex flex-col transition-all duration-300 ease-in-out ${
+        className={`fixed z-40 w-64 h-screen bg-gradient-to-b from-blue-900 to-blue-800 text-white flex flex-col transition-all duration-300 ease-in-out ${
           sidebarOpen ? "left-0" : "-left-64 md:left-0"
         }`}
       >
         <div className="flex flex-col h-full">
-          {/* Logo/Sidebar Header */}
           <div className="p-4 border-b border-blue-700 flex items-center justify-between">
             <h2 className="text-xl font-bold flex items-center">
-              <span className="bg-white text-blue-900 rounded-lg p-1 mr-2">
+              <span className="bg-blue-100 text-blue-900 rounded-lg p-1 mr-2">
                 <FiTool />
               </span>
               Admin Panel
             </h2>
-            {!isMobile && (
-              <button
-                onClick={() => setSidebarOpen(false)}
-                className="md:hidden p-1 rounded-full hover:bg-blue-700"
-              >
-                <FiX />
-              </button>
-            )}
           </div>
 
-          {/* Navigation Menu */}
           <nav className="flex-1 overflow-y-auto py-4">
             <ul className="space-y-1 px-2">
               {menuItems.map((item) => (
@@ -153,22 +131,25 @@ const SidebarAdmin = () => {
                   >
                     <span className="mr-3">{item.icon}</span>
                     <span className="font-medium">{item.name}</span>
-                    {activeMenu === item.key && (
-                      <FiCheck className="ml-auto animate-fade-in" />
-                    )}
+                    {activeMenu === item.key && <FiCheck className="ml-auto" />}
                   </button>
                 </li>
               ))}
             </ul>
           </nav>
 
-          {/* Logout Button */}
           <div className="p-4 border-t border-blue-700">
+            <div className="flex items-center mb-4 gap-3">
+              <div className="w-10 h-10 rounded-full bg-white bg-opacity-10 flex items-center justify-center">
+                <FiUser className="text-white" />
+              </div>
+              <div>
+                <p className="font-medium">Admin</p>
+                <p className="text-xs text-white text-opacity-70">Admin Panel</p>
+              </div>
+            </div>
             <button
-              onClick={() => {
-                localStorage.removeItem("currentUser");
-                navigate("/");
-              }}
+              onClick={handleLogout}
               className="w-full flex items-center justify-center p-3 bg-red-600 hover:bg-red-700 rounded-lg transition-all duration-200 shadow hover:shadow-md"
             >
               <FiLogOut className="mr-2" />

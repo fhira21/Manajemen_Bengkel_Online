@@ -12,9 +12,12 @@ import ManajemenPromo from './pages/admin/ManajemenPromo';
 
 // dashboard montir
 import DashboardMontir from './pages/montir/DashboardMontir';
+import RiwayatMontir from './pages/montir/RiwayatMontir';
 
 // dashboard gudang
 import DashboardGudang from './pages/gudang/DashboardGudang';
+import SparepartMasuk from './pages/gudang/SparepartMasuk';
+import ManajemenSparepartKeluar from './pages/gudang/SparepartKeluar';
 
 function App() {
   return <MainLayout />;
@@ -35,9 +38,11 @@ function MainLayout() {
       <Route path="/admin/promo" element={<ManajemenPromo />} />
 
       <Route path="/dashboardmontir" element={<DashboardMontir />} />
-
+      <Route path="/riwayatmontir" element={<RiwayatMontir />} />
 
       <Route path="/dashboardgudang" element={<DashboardGudang />} />
+      <Route path="/gudang/masuk" element={<SparepartMasuk />} />
+      <Route path="/gudang/keluar" element={<ManajemenSparepartKeluar />} />
 
     </Routes>
   );
