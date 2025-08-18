@@ -159,7 +159,7 @@ const ManajemenService = () => {
                 resetForm();
                 setShowModal(true);
               }}
-              className="px-4 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-l flex items-center gap-1"
+              className="px-5 py-3 bg-blue-600 text-white rounded hover:bg-blue-700 text-l flex items-center gap-1"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
@@ -285,7 +285,7 @@ const ManajemenService = () => {
                               type: "spring",
                               stiffness: 200
                             }}
-                            className="px-4 py-2 text-left font-medium text-gray-700"
+                            className="px-4 py-4 text-left font-medium text-gray-700"
                           >
                             {header}
                           </motion.th>
@@ -314,13 +314,13 @@ const ManajemenService = () => {
                         }}
                         className="hover:bg-gray-50"
                       >
-                        <td className="px-4 py-2 whitespace-nowrap">{index + 1}</td>
-                        <td className="px-4 py-2 whitespace-nowrap font-medium">{service.nama}</td>
-                        <td className="px-4 py-2 max-w-xs truncate">{service.deskripsi || '-'}</td>
-                        <td className="px-4 py-2 whitespace-nowrap text-blue-600">
+                        <td className="px-4 py-4 whitespace-nowrap">{index + 1}</td>
+                        <td className="px-6 py-4 whitespace-nowrap font-medium">{service.nama}</td>
+                        <td className="px-6 py-4 max-w-xs truncate">{service.deskripsi || '-'}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-blue-600">
                           {formatPrice(service.harga)}
                         </td>
-                        <td className="px-4 py-2 whitespace-nowrap">
+                        <td className="px-4 py-4 whitespace-nowrap">
                           <div className="flex gap-2">
                             <motion.button
                               whileHover={{ 

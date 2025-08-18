@@ -186,7 +186,7 @@ const ManajemenPromo = () => {
                 image: null,
               });
             }}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all shadow-md"
+            className="px-5 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-l transition-all shadow-md"
           >
             + Tambah Promo
           </motion.button>
@@ -467,7 +467,7 @@ const ManajemenPromo = () => {
                           initial={{ opacity: 0, y: -10 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: 0.1 * index }}
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                         >
                           {header}
                         </motion.th>

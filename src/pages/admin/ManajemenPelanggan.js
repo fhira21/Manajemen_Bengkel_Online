@@ -62,7 +62,7 @@ const ManajemenPelanggan = () => {
     const nomor = no_telepon.replace(/\D/g, "").replace(/^0/, "62");
     const pesan = `Halo ${nama}, kami dari Bengkel Volkswagen ingin mengingatkan bahwa kendaraan Anda dengan plat nomor ${plat_no} (${tipe_kendaraan}) terakhir diservis pada ${formatTanggal(
       tgl_booking
-    )}. Jika sudah waktunya servis kembali, silakan booking melalui website kami atau hubungi kami untuk bantuan. Terima kasih!`;
+    )}. Sudah waktunya servis kembali, silakan booking melalui website kami atau hubungi kami untuk bantuan. Terima kasih!`;
     const url = `https://wa.me/${nomor}?text=${encodeURIComponent(pesan)}`;
     window.open(url, "_blank");
   };

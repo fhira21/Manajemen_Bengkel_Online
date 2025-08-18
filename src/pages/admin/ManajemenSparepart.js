@@ -135,7 +135,7 @@ const ManajemenSparepart = () => {
             <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Manajemen Sparepart</h1>
             <button
               onClick={() => openModal()}
-              className="px-4 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-l flex items-center gap-1"
+              className="px-5 py-3 bg-blue-600 text-white rounded hover:bg-blue-700 text-l flex items-center gap-1"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
@@ -192,22 +192,22 @@ const ManajemenSparepart = () => {
                 <table className="min-w-full divide-y divide-gray-200 text-sm">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-4 py-2 text-left font-medium text-gray-700">No</th>
-                      <th className="px-4 py-2 text-left font-medium text-gray-700">Nama</th>
-                      <th className="px-4 py-2 text-left font-medium text-gray-700">Deskripsi</th>
-                      <th className="px-4 py-2 text-left font-medium text-gray-700">Harga</th>
-                      <th className="px-4 py-2 text-left font-medium text-gray-700">Stok</th>
-                      <th className="px-4 py-2 text-left font-medium text-gray-700">Aksi</th>
+                      <th className="px-4 py-4 text-left font-medium text-gray-700">No</th>
+                      <th className="px-4 py-4 text-left font-medium text-gray-700">Nama Sparepart</th>
+                      <th className="px-4 py-4 text-left font-medium text-gray-700">Deskripsi</th>
+                      <th className="px-4 py-4 text-left font-medium text-gray-700">Harga</th>
+                      <th className="px-4 py-4 text-left font-medium text-gray-700">Stok</th>
+                      <th className="px-4 py-4 text-left font-medium text-gray-700">Aksi</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {filteredData.map((item, index) => (
                       <tr key={item.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-2 whitespace-nowrap">{index + 1}</td>
-                        <td className="px-4 py-2 whitespace-nowrap font-medium">{item.nama}</td>
-                        <td className="px-4 py-2 max-w-xs truncate">{item.deskripsi || '-'}</td>
-                        <td className="px-4 py-2 whitespace-nowrap">{formatPrice(item.harga)}</td>
-                        <td className="px-4 py-2 whitespace-nowrap">
+                        <td className="px-6 py-4 whitespace-nowrap">{index + 1}</td>
+                        <td className="px-6 py-4 whitespace-nowrap font-medium">{item.nama}</td>
+                        <td className="px-6 py-4 max-w-xs truncate">{item.deskripsi || '-'}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">{formatPrice(item.harga)}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`px-2 py-1 rounded-full text-xs ${getStockColor(item.stok)}`}>
                             {item.stok} pcs
                           </span>

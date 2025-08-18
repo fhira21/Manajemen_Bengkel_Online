@@ -143,7 +143,7 @@ const ManajemenKaryawan = () => {
               }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setIsAddModalOpen(true)}
-              className="px-4 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-l flex items-center gap-1"
+              className="px-5 py-3 bg-blue-600 text-white rounded hover:bg-blue-700 text-l flex items-center gap-1"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
@@ -284,7 +284,7 @@ const ManajemenKaryawan = () => {
                               type: "spring",
                               stiffness: 200
                             }}
-                            className="px-4 py-2 text-left font-medium text-gray-700"
+                            className="px-6 py-4 text-left font-medium text-gray-700"
                           >
                             {header}
                           </motion.th>
@@ -313,10 +313,10 @@ const ManajemenKaryawan = () => {
                         }}
                         className="hover:bg-gray-50"
                       >
-                        <td className="px-4 py-2 whitespace-nowrap">{index + 1}</td>
-                        <td className="px-4 py-2 whitespace-nowrap font-medium">{user.nama_lengkap}</td>
-                        <td className="px-4 py-2 whitespace-nowrap">{user.username}</td>
-                        <td className="px-4 py-2 whitespace-nowrap">
+                        <td className="px-6 py-4 whitespace-nowrap">{index + 1}</td>
+                        <td className="px-6 py-4 whitespace-nowrap font-medium">{user.nama_lengkap}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">{user.username}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
                           <motion.span
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
@@ -325,7 +325,7 @@ const ManajemenKaryawan = () => {
                             {user.role}
                           </motion.span>
                         </td>
-                        <td className="px-4 py-2 whitespace-nowrap">
+                        <td className="v whitespace-nowrap">
                           <div className="flex gap-2">
                             <motion.button
                               whileHover={{ 
