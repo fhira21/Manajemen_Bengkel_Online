@@ -1,4 +1,4 @@
-# Fullstack Booking Bengkel and Management Bengkel
+# Booking and Management Bengkel
 
 This project is a web application built using **React** and bootstrapped with [Create React App](https://github.com/facebook/create-react-app). It serves as the frontend interface for a full-stack application focused on managing user interactions and data visualization.
 
@@ -14,21 +14,18 @@ The entire system was developed by **Fhira Triana Maulani** as a **Full Stack De
 
 To run this project locally, follow the steps below:
 
-### 1. Clone the Repository
+1. Clone the Repository
+   ```bash
+   git clone https://github.com/your-username/your-repo-name.git
+   cd your-repo-name
 
-```bash
-git clone https://github.com/your-username/your-repo-name.git
-cd your-repo-name
+2. Install Dependencies
+   ```bash
+   npm install
 
-### 2. Install Dependencies
-
-```bash
-npm install
-
-### 3. Start the Development Server
-
-```bash
-npm start
+4. Start the Development Server
+   ```bash
+   npm start
 
 Once started, the application will be available at:
 http://localhost:3000
