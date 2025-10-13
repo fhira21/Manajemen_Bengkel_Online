@@ -67,31 +67,36 @@ const SparepartMasuk = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    const newItem = {
-      sparepart_id: parseInt(form.sparepart_id),
-      jumlah_stok: parseInt(form.jumlah_stok),
-      tgl: form.tgl,
-      keterangan: form.keterangan,
-      dikelola_oleh: parseInt(form.dikelola_oleh),
-      tipe: "masuk",
-    };
+  e.preventDefault();
 
-    const { error } = await supabase.from("sparepart_stok").insert([newItem]);
-    if (!error) {
-      setForm({
-        sparepart_id: "",
-        jumlah_stok: 1,
-        tgl: new Date().toISOString().split("T")[0],
-        keterangan: "",
-        dikelola_oleh: ""
-      });
-      setShowModal(false);
-      fetchData();
-    } else {
-      alert("Gagal menambahkan data.");
-    }
+  // Validasi dulu
+  if (!form.sparepart_id || !form.jumlah_stok || !form.tgl || !form.dikelola_oleh) {
+    alert("Mohon lengkapi semua data!");
+    return;
+  }
+
+  const newItem = {
+    ...form,
+    tipe: "masuk",
+    jumlah_stok: Number(form.jumlah_stok),
   };
+
+  const { error } = await supabase.from("sparepart_stok").insert([newItem]);
+  if (error) {
+    alert("Gagal menambahkan data: " + error.message);
+  } else {
+    setForm({
+      sparepart_id: "",
+      jumlah_stok: 1,
+      tgl: new Date().toISOString().split("T")[0],
+      keterangan: "",
+      dikelola_oleh: "",
+    });
+    setShowModal(false);
+    fetchData();
+  }
+};
+
 
   const filtered = dataMasuk.filter(item => {
     const namaSparepart = item.spareparts?.nama?.toLowerCase() || "";

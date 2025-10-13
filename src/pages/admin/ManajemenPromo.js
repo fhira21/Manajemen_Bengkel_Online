@@ -141,8 +141,8 @@ const ManajemenPromo = () => {
   };
 
   const formatDate = (dateString) => {
-    const options = { day: 'numeric', month: 'short', year: 'numeric' };
-    return new Date(dateString).toLocaleDateString('id-ID', options);
+    const options = { day: "numeric", month: "short", year: "numeric" };
+    return new Date(dateString).toLocaleDateString("id-ID", options);
   };
 
   return (
@@ -150,7 +150,7 @@ const ManajemenPromo = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
-      className="flex"
+      className="flex flex-col md:flex-row"
     >
       <SidebarAdmin />
 
@@ -158,13 +158,14 @@ const ManajemenPromo = () => {
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.4 }}
-        className="flex-1 md:ml-64 p-4"
+        className="flex-1 md:ml-64 p-4 sm:p-6"
       >
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+        {/* Header */}
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
           <motion.h1
             initial={{ x: -20 }}
             animate={{ x: 0 }}
-            className="text-2xl md:text-3xl font-bold text-gray-800"
+            className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800"
           >
             Manajemen Promo
           </motion.h1>
@@ -186,7 +187,7 @@ const ManajemenPromo = () => {
                 image: null,
               });
             }}
-            className="px-5 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-l transition-all shadow-md"
+            className="w-full sm:w-auto px-4 py-2 sm:px-5 sm:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm sm:text-base transition-all shadow-md"
           >
             + Tambah Promo
           </motion.button>
@@ -199,32 +200,32 @@ const ManajemenPromo = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4"
+              className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 overflow-auto"
             >
               <motion.div
                 initial={{ scale: 0.9, y: 20 }}
                 animate={{ scale: 1, y: 0 }}
                 exit={{ scale: 0.9, y: 20 }}
-                className="bg-white rounded-xl shadow-2xl w-full max-w-2xl"
+                className="bg-white rounded-xl shadow-2xl w-full max-w-full md:max-w-2xl mx-2 sm:mx-4"
               >
-                <div className="flex justify-between items-center border-b p-4">
-                  <h2 className="text-xl font-bold text-gray-800">
+                {/* Header Form */}
+                <div className="flex justify-between items-center border-b p-3 sm:p-4 sticky top-0 bg-white">
+                  <h2 className="text-lg sm:text-xl font-bold text-gray-800">
                     {selectedPromo ? "Edit Promo" : "Tambah Promo Baru"}
                   </h2>
                   <button
                     onClick={() => setIsFormOpen(false)}
-                    className="text-gray-500 hover:text-gray-700"
+                    className="text-gray-500 hover:text-gray-700 text-xl"
                   >
                     ✕
                   </button>
                 </div>
-                <form onSubmit={handleSubmit} className="p-4 space-y-4">
+
+                {/* Form */}
+                <form onSubmit={handleSubmit} className="p-3 sm:p-4 space-y-4">
+                  {/* Grid Form */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.1 }}
-                    >
+                    <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Kode Promo
                       </label>
@@ -235,14 +236,10 @@ const ManajemenPromo = () => {
                         value={form.kode_promo}
                         onChange={handleChange}
                         required
-                        className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 sm:px-4 sm:py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                       />
-                    </motion.div>
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.2 }}
-                    >
+                    </div>
+                    <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Nama Promo
                       </label>
@@ -253,16 +250,13 @@ const ManajemenPromo = () => {
                         value={form.nama}
                         onChange={handleChange}
                         required
-                        className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 sm:px-4 sm:py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                       />
-                    </motion.div>
+                    </div>
                   </div>
 
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 }}
-                  >
+                  {/* Deskripsi */}
+                  <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Deskripsi
                     </label>
@@ -271,17 +265,14 @@ const ManajemenPromo = () => {
                       placeholder="Deskripsi Promo"
                       value={form.description}
                       onChange={handleChange}
-                      className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 sm:px-4 sm:py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                       rows="3"
                     ></textarea>
-                  </motion.div>
+                  </div>
 
+                  {/* Harga */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.4 }}
-                    >
+                    <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Harga Asli
                       </label>
@@ -292,14 +283,10 @@ const ManajemenPromo = () => {
                         value={form.harga_asli}
                         onChange={handleChange}
                         required
-                        className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 sm:px-4 sm:py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                       />
-                    </motion.div>
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.5 }}
-                    >
+                    </div>
+                    <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Harga Promo
                       </label>
@@ -310,17 +297,14 @@ const ManajemenPromo = () => {
                         value={form.harga_promo}
                         onChange={handleChange}
                         required
-                        className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 sm:px-4 sm:py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                       />
-                    </motion.div>
+                    </div>
                   </div>
 
+                  {/* Periode */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.6 }}
-                    >
+                    <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Berlaku Mulai
                       </label>
@@ -330,14 +314,10 @@ const ManajemenPromo = () => {
                         value={form.berlaku_mulai}
                         onChange={handleChange}
                         required
-                        className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 sm:px-4 sm:py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                       />
-                    </motion.div>
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.7 }}
-                    >
+                    </div>
+                    <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Berlaku Sampai
                       </label>
@@ -347,16 +327,13 @@ const ManajemenPromo = () => {
                         value={form.berlaku_sampai}
                         onChange={handleChange}
                         required
-                        className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 sm:px-4 sm:py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                       />
-                    </motion.div>
+                    </div>
                   </div>
 
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.8 }}
-                  >
+                  {/* Gambar */}
+                  <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Gambar Promo
                     </label>
@@ -365,30 +342,22 @@ const ManajemenPromo = () => {
                       accept="image/*"
                       name="image"
                       onChange={handleChange}
-                      className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 sm:px-4 sm:py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                     />
-                  </motion.div>
+                  </div>
 
                   {form.image && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="flex justify-center"
-                    >
+                    <div className="flex justify-center">
                       <img
                         src={form.image}
                         alt="Preview"
-                        className="max-h-40 rounded-lg border border-gray-200"
+                        className="max-h-40 rounded-lg border border-gray-200 object-cover"
                       />
-                    </motion.div>
+                    </div>
                   )}
 
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.9 }}
-                    className="flex justify-end gap-3 pt-4"
-                  >
+                  {/* Tombol */}
+                  <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
                     <button
                       type="button"
                       onClick={() => setIsFormOpen(false)}
@@ -398,15 +367,16 @@ const ManajemenPromo = () => {
                     </button>
                     <button
                       type="submit"
-                      className={`px-4 py-2 rounded-lg text-white transition-colors shadow-md hover:shadow-lg ${form.nama &&
-                          form.kode_promo &&
-                          form.harga_asli &&
-                          form.harga_promo &&
-                          form.berlaku_mulai &&
-                          form.berlaku_sampai
+                      className={`px-4 py-2 rounded-lg text-white transition-colors shadow-md hover:shadow-lg ${
+                        form.nama &&
+                        form.kode_promo &&
+                        form.harga_asli &&
+                        form.harga_promo &&
+                        form.berlaku_mulai &&
+                        form.berlaku_sampai
                           ? "bg-blue-600 hover:bg-blue-700"
                           : "bg-gray-300 cursor-not-allowed"
-                        }`}
+                      }`}
                       disabled={
                         !(
                           form.nama &&
@@ -420,14 +390,14 @@ const ManajemenPromo = () => {
                     >
                       {selectedPromo ? "Simpan Perubahan" : "Tambah Promo"}
                     </button>
-                  </motion.div>
+                  </div>
                 </form>
               </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Promo Table */}
+        {/* Table */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -435,98 +405,77 @@ const ManajemenPromo = () => {
           className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden"
         >
           {isLoading ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="p-8 text-center"
-            >
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-                className="rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"
-              ></motion.div>
-              <p className="mt-4 text-gray-600">Memuat data promo...</p>
-            </motion.div>
+            <div className="p-8 text-center">
+              <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+              <p className="mt-3 text-gray-600 text-sm sm:text-base">
+                Memuat data promo...
+              </p>
+            </div>
           ) : promos.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="p-8 text-center text-gray-500"
-            >
+            <div className="p-6 text-center text-gray-500 text-sm sm:text-base">
               Tidak ada data promo
-            </motion.div>
+            </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
+              <table className="min-w-full divide-y divide-gray-200 text-xs sm:text-sm">
                 <thead className="bg-gray-50">
                   <tr>
-                    {["Kode", "Nama", "Deskripsi", "Harga", "Periode", "Aksi"].map(
-                      (header, index) => (
-                        <motion.th
-                          key={header}
-                          initial={{ opacity: 0, y: -10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.1 * index }}
-                          className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                        >
-                          {header}
-                        </motion.th>
-                      )
-                    )}
+                    {[
+                      "Kode",
+                      "Nama",
+                      "Deskripsi",
+                      "Harga",
+                      "Periode",
+                      "Aksi",
+                    ].map((header) => (
+                      <th
+                        key={header}
+                        className="px-4 sm:px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        {header}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {promos.map((promo) => (
-                    <motion.tr
-                      key={promo.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      whileHover={{ backgroundColor: "rgba(249, 250, 251, 1)" }}
-                      className="hover:bg-gray-50"
-                    >
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <tr key={promo.id} className="hover:bg-gray-50">
+                      <td className="px-4 sm:px-6 py-3 whitespace-nowrap">
                         {promo.kode_promo}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
-                          {promo.nama}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-500">
+                      <td className="px-4 sm:px-6 py-3">{promo.nama}</td>
+                      <td className="px-4 sm:px-6 py-3 text-gray-500 max-w-[200px] truncate">
                         {promo.description}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="line-through text-gray-500 text-sm">
+                      <td className="px-4 sm:px-6 py-3 whitespace-nowrap">
+                        <div className="line-through text-gray-500 text-xs sm:text-sm">
                           {formatPrice(promo.harga_asli)}
                         </div>
-                        <div className="text-red-600 font-bold text-sm">
+                        <div className="text-red-600 font-semibold text-xs sm:text-sm">
                           {formatPrice(promo.harga_promo)}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatDate(promo.berlaku_mulai)} - {formatDate(promo.berlaku_sampai)}
+                      <td className="px-4 sm:px-6 py-3 whitespace-nowrap text-gray-500">
+                        {formatDate(promo.berlaku_mulai)} -{" "}
+                        {formatDate(promo.berlaku_sampai)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex gap-4">
-                          <motion.button
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
+                      <td className="px-4 sm:px-6 py-3 whitespace-nowrap">
+                        <div className="flex gap-2 sm:gap-4">
+                          <button
                             onClick={() => openEditForm(promo)}
-                            className="text-blue-600 hover:text-blue-900"
+                            className="text-blue-600 hover:text-blue-900 text-xs sm:text-sm"
                           >
                             Edit
-                          </motion.button>
-                          <motion.button
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
+                          </button>
+                          <button
                             onClick={() => handleDelete(promo.id)}
-                            className="text-red-600 hover:text-red-900"
+                            className="text-red-600 hover:text-red-900 text-xs sm:text-sm"
                           >
                             Hapus
-                          </motion.button>
+                          </button>
                         </div>
                       </td>
-                    </motion.tr>
+                    </tr>
                   ))}
                 </tbody>
               </table>

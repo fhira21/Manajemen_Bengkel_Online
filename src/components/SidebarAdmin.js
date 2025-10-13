@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { 
-  FiHome, FiUsers, FiTag, FiPackage, FiTool, 
-  FiUser, FiLogOut, FiMenu, FiX, FiCheck 
-} from "react-icons/fi";
+import { FiHome, FiUsers, FiTag, FiPackage, FiTool, FiUser, FiLogOut, FiMenu, FiX, FiCheck } from "react-icons/fi";
 
 const SidebarAdmin = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -11,6 +8,8 @@ const SidebarAdmin = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [activeMenu, setActiveMenu] = useState("");
+
+  const currentUser = JSON.parse(localStorage.getItem("currentUser"));
 
   useEffect(() => {
     const path = location.pathname;
@@ -28,53 +27,22 @@ const SidebarAdmin = () => {
       setIsMobile(mobile);
       setSidebarOpen(!mobile);
     };
-
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   const menuItems = [
-    {
-      path: "/dashboardadmin",
-      name: "Dashboard",
-      icon: <FiHome className="text-lg" />,
-      key: "dashboard"
-    },
-    {
-      path: "/admin/pelanggan",
-      name: "Pelanggan",
-      icon: <FiUsers className="text-lg" />,
-      key: "pelanggan"
-    },
-    {
-      path: "/admin/promo",
-      name: "Promo",
-      icon: <FiTag className="text-lg" />,
-      key: "promo"
-    },
-    {
-      path: "/admin/sparepart",
-      name: "Sparepart",
-      icon: <FiPackage className="text-lg" />,
-      key: "sparepart"
-    },
-    {
-      path: "/admin/service",
-      name: "Service",
-      icon: <FiTool className="text-lg" />,
-      key: "service"
-    },
-    {
-      path: "/admin/karyawan",
-      name: "Karyawan",
-      icon: <FiUser className="text-lg" />,
-      key: "karyawan"
-    }
+    { path: "/dashboardadmin", name: "Dashboard", icon: <FiHome className="text-lg" />, key: "dashboard" },
+    { path: "/admin/pelanggan", name: "Pelanggan", icon: <FiUsers className="text-lg" />, key: "pelanggan" },
+    { path: "/admin/promo", name: "Promo", icon: <FiTag className="text-lg" />, key: "promo" },
+    { path: "/admin/sparepart", name: "Sparepart", icon: <FiPackage className="text-lg" />, key: "sparepart" },
+    { path: "/admin/service", name: "Service", icon: <FiTool className="text-lg" />, key: "service" },
+    { path: "/admin/karyawan", name: "Karyawan", icon: <FiUser className="text-lg" />, key: "karyawan" }
   ];
 
   const handleLogout = () => {
     localStorage.removeItem("currentUser");
-    navigate("/");
+    navigate("/login");
   };
 
   const handleNavigation = (path) => {
@@ -87,32 +55,21 @@ const SidebarAdmin = () => {
       {isMobile && (
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          className={`fixed z-50 top-4 left-4 p-2 rounded-md bg-blue-900 text-white shadow-lg transition-all ${
-            sidebarOpen ? "transform rotate-90" : ""
-          }`}
+          className={`fixed z-50 top-4 left-4 p-2 rounded-md bg-blue-900 text-white shadow-lg transition-all ${sidebarOpen ? "transform rotate-90" : ""}`}
         >
           {sidebarOpen ? <FiX className="text-xl" /> : <FiMenu className="text-xl" />}
         </button>
       )}
 
       {isMobile && sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-30"
-          onClick={() => setSidebarOpen(false)}
-        />
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-30" onClick={() => setSidebarOpen(false)} />
       )}
 
-      <aside
-        className={`fixed z-40 w-64 h-screen bg-gradient-to-b from-blue-900 to-blue-800 text-white flex flex-col transition-all duration-300 ease-in-out ${
-          sidebarOpen ? "left-0" : "-left-64 md:left-0"
-        }`}
-      >
+      <aside className={`fixed z-40 w-64 h-screen bg-gradient-to-b from-blue-900 to-blue-800 text-white flex flex-col transition-all duration-300 ease-in-out ${sidebarOpen ? "left-0" : "-left-64 md:left-0"}`}>
         <div className="flex flex-col h-full">
           <div className="p-4 border-b border-blue-700 flex items-center justify-between">
             <h2 className="text-xl font-bold flex items-center">
-              <span className="bg-blue-100 text-blue-900 rounded-lg p-1 mr-2">
-                <FiTool />
-              </span>
+              <span className="bg-blue-100 text-blue-900 rounded-lg p-1 mr-2"><FiTool /></span>
               Admin Panel
             </h2>
           </div>
@@ -123,11 +80,7 @@ const SidebarAdmin = () => {
                 <li key={item.key}>
                   <button
                     onClick={() => handleNavigation(item.path)}
-                    className={`w-full flex items-center p-3 rounded-lg transition-all duration-200 ${
-                      activeMenu === item.key
-                        ? "bg-blue-700 shadow-md"
-                        : "hover:bg-blue-700 hover:shadow-md"
-                    }`}
+                    className={`w-full flex items-center p-3 rounded-lg transition-all duration-200 ${activeMenu === item.key ? "bg-blue-700 shadow-md" : "hover:bg-blue-700 hover:shadow-md"}`}
                   >
                     <span className="mr-3">{item.icon}</span>
                     <span className="font-medium">{item.name}</span>
@@ -138,19 +91,20 @@ const SidebarAdmin = () => {
             </ul>
           </nav>
 
-          <div className="p-4 border-t border-blue-700">
-            <div className="flex items-center mb-4 gap-3">
+          {/* Profile Footer */}
+          <div className="p-4 border-t border-blue-700 flex flex-col gap-3">
+            <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-white bg-opacity-10 flex items-center justify-center">
                 <FiUser className="text-white" />
               </div>
-              <div>
-                <p className="font-medium">Admin</p>
-                <p className="text-xs text-white text-opacity-70">Admin Panel</p>
+              <div className="flex flex-col text-sm">
+                <p className="font-medium">{currentUser?.name || "Admin"}</p>
+                <p className="text-xs text-white text-opacity-70">{currentUser?.email || "admin@example.com"}</p>
               </div>
             </div>
             <button
               onClick={handleLogout}
-              className="w-full flex items-center justify-center p-3 bg-red-600 hover:bg-red-700 rounded-lg transition-all duration-200 shadow hover:shadow-md"
+              className="w-full flex items-center justify-center p-3 bg-red-600 hover:bg-red-700 rounded-lg transition-all duration-200 shadow hover:shadow-md mt-2"
             >
               <FiLogOut className="mr-2" />
               <span>Logout</span>

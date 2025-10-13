@@ -18,9 +18,10 @@ const ManajemenSparepart = () => {
     deskripsi: "",
   });
 
+  // ✅ Ambil data sparepart dari VIEW supaya stok-nya up to date
   const fetchSpareparts = async () => {
     setIsLoading(true);
-    let query = supabase.from("spareparts").select("*");
+    let query = supabase.from("spareparts_with_stok").select("*");
 
     if (sortFilter === "termurah") {
       query = query.order("harga", { ascending: true });
@@ -47,7 +48,7 @@ const ManajemenSparepart = () => {
       setFormData({
         nama: item.nama,
         harga: item.harga,
-        stok: item.stok,
+        stok: item.stok, // stok dari view
         deskripsi: item.deskripsi || "",
       });
     } else {
@@ -65,29 +66,25 @@ const ManajemenSparepart = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // stok tidak disimpan ke tabel spareparts (karena dihitung otomatis di view)
+    const payload = {
+      nama: formData.nama,
+      harga: Number(formData.harga),
+      deskripsi: formData.deskripsi,
+    };
+
     if (editing) {
       const { error } = await supabase
         .from("spareparts")
-        .update({
-          nama: formData.nama,
-          harga: Number(formData.harga),
-          stok: Number(formData.stok),
-          deskripsi: formData.deskripsi,
-        })
+        .update(payload)
         .eq("id", editing.id);
       if (!error) {
         fetchSpareparts();
         closeModal();
       } else alert("Gagal memperbarui: " + error.message);
     } else {
-      const { error } = await supabase.from("spareparts").insert([
-        {
-          nama: formData.nama,
-          harga: Number(formData.harga),
-          stok: Number(formData.stok),
-          deskripsi: formData.deskripsi,
-        },
-      ]);
+      const { error } = await supabase.from("spareparts").insert([payload]);
       if (!error) {
         fetchSpareparts();
         closeModal();
@@ -196,7 +193,7 @@ const ManajemenSparepart = () => {
                       <th className="px-4 py-4 text-left font-medium text-gray-700">Nama Sparepart</th>
                       <th className="px-4 py-4 text-left font-medium text-gray-700">Deskripsi</th>
                       <th className="px-4 py-4 text-left font-medium text-gray-700">Harga</th>
-                      <th className="px-4 py-4 text-left font-medium text-gray-700">Stok</th>
+                      <th className="px-4 py-4 text-left font-medium text-gray-700">Sisa Stok</th>
                       <th className="px-4 py-4 text-left font-medium text-gray-700">Aksi</th>
                     </tr>
                   </thead>
@@ -272,17 +269,6 @@ const ManajemenSparepart = () => {
                       placeholder="Harga"
                       value={formData.harga}
                       onChange={(e) => setFormData({ ...formData, harga: e.target.value })}
-                      required
-                      className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Stok</label>
-                    <input
-                      type="number"
-                      placeholder="Jumlah stok"
-                      value={formData.stok}
-                      onChange={(e) => setFormData({ ...formData, stok: e.target.value })}
                       required
                       className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />

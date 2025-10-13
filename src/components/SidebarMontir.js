@@ -1,94 +1,129 @@
-import React from 'react'
-import { LogOut, LayoutDashboard, Clock, Settings, User } from 'lucide-react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { FiLogOut, FiMenu, FiX, FiUser, FiCheck, FiClock, FiHome } from "react-icons/fi";
 
 const SidebarMontir = () => {
-  const navigate = useNavigate()
-  const location = useLocation()
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
+  const [currentUser, setCurrentUser] = useState({ name: "", email: "" });
 
   const navItems = [
-    {
-      name: 'Dashboard',
-      icon: <LayoutDashboard size={20} />,
-      path: '/dashboardmontir',
-    },
-    {
-      name: 'Riwayat Service',
-      icon: <Clock size={20} />,
-      path: '/riwayatmontir',
-    },
-    {
-      name: 'Profil',
-      icon: <User size={20} />,
-      path: '/profilmontir',
-    },
-    {
-      name: 'Pengaturan',
-      icon: <Settings size={20} />,
-      path: '/pengaturanmontir',
-    },
-  ]
+    { name: "Dashboard", icon: <FiHome size={20} />, path: "/dashboardmontir" },
+    { name: "Riwayat Service", icon: <FiClock size={20} />, path: "/riwayatmontir" },
+  ];
+
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem("currentUser")) || {};
+    setCurrentUser({
+      name: user.nama || user.name || "Montir",
+      email: user.email || "example@email.com",
+    });
+
+    const handleResize = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      setSidebarOpen(!mobile);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('user_id')
-    navigate('/login')
-  }
+    localStorage.removeItem("currentUser");
+    navigate("/login");
+  };
+
+  const handleNavigation = (path) => {
+    navigate(path);
+    if (isMobile) setSidebarOpen(false);
+  };
 
   return (
-    <aside className="w-64 h-screen bg-blue-700 text-white fixed shadow-lg">
-      {/* Header */}
-      <div className="px-6 py-5 border-b border-blue-600">
-        <h1 className="text-xl font-bold flex items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2z" />
-          </svg>
-          Montir Panel
-        </h1>
-      </div>
+    <>
+      {/* Mobile toggle */}
+      {isMobile && (
+        <button
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className={`fixed z-50 top-4 left-4 p-2 rounded-md bg-blue-900 text-white shadow-lg transition-all ${
+            sidebarOpen ? "rotate-90" : ""
+          }`}
+        >
+          {sidebarOpen ? <FiX className="text-xl" /> : <FiMenu className="text-xl" />}
+        </button>
+      )}
 
-      {/* Navigation */}
-      <nav className="flex flex-col px-4 py-6 gap-1">
-        {navItems.map((item) => (
-          <button
-            key={item.name}
-            onClick={() => navigate(item.path)}
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-left ${
-              location.pathname === item.path 
-                ? 'bg-blue-600 shadow-md font-medium' 
-                : 'hover:bg-blue-800/50'
-            }`}
-          >
-            <span className="text-blue-200">
-              {item.icon}
-            </span>
-            {item.name}
-          </button>
-        ))}
+      {/* Mobile overlay */}
+      {isMobile && sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-30"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
-        {/* Logout Button */}
-        <div className="mt-8 pt-4 border-t border-blue-600">
+      <aside
+        className={`fixed z-40 w-64 h-screen bg-gradient-to-b from-blue-900 to-blue-800 text-white flex flex-col justify-between transition-all duration-300 ease-in-out ${
+          sidebarOpen ? "left-0" : "-left-64 md:left-0"
+        }`}
+      >
+        {/* Sidebar content */}
+        <div>
+          {/* Header */}
+          <div className="p-4 border-b border-blue-700 flex items-center justify-between">
+            <h2 className="text-xl font-bold flex items-center gap-2">
+              <span className="bg-blue-100 text-blue-900 rounded-lg p-1">
+                <FiClock />
+              </span>
+              Montir Panel
+            </h2>
+          </div>
+
+          {/* Navigation */}
+          <nav className="flex-1 overflow-y-auto py-4">
+            <ul className="space-y-1 px-2">
+              {navItems.map((item) => (
+                <li key={item.name}>
+                  <button
+                    onClick={() => handleNavigation(item.path)}
+                    className={`w-full flex items-center p-3 rounded-lg transition-all duration-200 ${
+                      location.pathname === item.path
+                        ? "bg-blue-700 shadow-md font-medium"
+                        : "hover:bg-blue-800/50"
+                    }`}
+                  >
+                    <span className="mr-3 text-blue-200">{item.icon}</span>
+                    <span>{item.name}</span>
+                    {location.pathname === item.path && <FiCheck className="ml-auto" />}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </div>
+
+        {/* Profile + Logout Footer */}
+        <div className="p-4 border-t border-blue-700">
+          <div className="flex items-center mb-4 gap-3">
+            <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center">
+              <FiUser className="text-white" />
+            </div>
+            <div className="truncate">
+              <p className="font-medium truncate">{currentUser.name}</p>
+              <p className="text-xs text-blue-200 truncate">{currentUser.email}</p>
+            </div>
+          </div>
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-red-600/20 text-red-100 w-full transition-all"
+            className="w-full flex items-center justify-center p-3 bg-red-600 hover:bg-red-700 rounded-lg transition-all duration-200 shadow hover:shadow-md"
           >
-            <LogOut size={20} className="text-red-300" />
-            <span>Logout</span>
+            <FiLogOut className="mr-2" />
+            Logout
           </button>
         </div>
-      </nav>
+      </aside>
+    </>
+  );
+};
 
-      {/* Profile Footer */}
-      <div className="absolute bottom-0 left-0 right-0 px-4 py-3 bg-blue-800 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center">
-          <User size={18} className="text-white" />
-        </div>
-        <div>
-          <p className="font-medium">Nama Montir</p>
-          <p className="text-xs text-blue-200">Montir Bengkel</p>
-        </div>
-      </div>
-    </aside>
-  )
-}
-
-export default SidebarMontir
+export default SidebarMontir;
