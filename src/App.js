@@ -9,6 +9,7 @@ import ManajemenPelanggan from './pages/admin/ManajemenPelanggan';
 import ManajemenKaryawan from './pages/admin/ManajemenMechanic';
 import ManajemenSparepart from './pages/admin/ManajemenSparepart';
 import ManajemenPromo from './pages/admin/ManajemenPromo';
+import NotaBooking from './pages/admin/NotaBooking';
 
 // dashboard montir
 import DashboardMontir from './pages/montir/DashboardMontir';
@@ -36,6 +37,7 @@ function MainLayout() {
       <Route path="/admin/karyawan" element={<ManajemenKaryawan />} />
       <Route path="/admin/sparepart" element={<ManajemenSparepart />} />
       <Route path="/admin/promo" element={<ManajemenPromo />} />
+      <Route path="/admin/nota/:id" element={<NotaBooking />} />
 
       <Route path="/dashboardmontir" element={<DashboardMontir />} />
       <Route path="/riwayatmontir" element={<RiwayatMontir />} />

@@ -39,10 +39,10 @@ export default function DashboardAdmin() {
     if (dateFilter) {
       const startOfDay = new Date(dateFilter);
       startOfDay.setHours(0, 0, 0, 0);
-      
+
       const endOfDay = new Date(dateFilter);
       endOfDay.setHours(23, 59, 59, 999);
-      
+
       query = query
         .gte('tgl_booking', startOfDay.toISOString())
         .lte('tgl_booking', endOfDay.toISOString());
@@ -106,7 +106,7 @@ export default function DashboardAdmin() {
 
   const filteredBookings = bookings.filter((booking) => {
     const matchesSearch = booking.plat_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         booking.nama.toLowerCase().includes(searchTerm.toLowerCase());
+      booking.nama.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || booking.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -136,7 +136,7 @@ export default function DashboardAdmin() {
     <div className="flex">
       <Sidebar />
       <div className="flex-1 md:ml-64 p-4">
-        <motion.h1 
+        <motion.h1
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-2xl font-bold mb-6 text-gray-800"
@@ -284,7 +284,7 @@ export default function DashboardAdmin() {
             >
               <FiClock />
               <span>Menampilkan booking pada tanggal: {new Date(dateFilter).toLocaleDateString('id-ID')}</span>
-              <button 
+              <button
                 onClick={() => setDateFilter(null)}
                 className="ml-auto text-blue-600 hover:text-blue-800"
               >
@@ -306,7 +306,7 @@ export default function DashboardAdmin() {
                     { key: "status", label: "Status", sortable: true },
                     { key: "nota", label: "Nota", sortable: false }
                   ].map((header) => (
-                    <th 
+                    <th
                       key={header.key}
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                       onClick={() => header.sortable && handleSort(header.key)}
