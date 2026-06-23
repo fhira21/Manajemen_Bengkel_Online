@@ -62,11 +62,11 @@ const LoginPage = () => {
         );
 
         if (user.role === "admin") {
-          navigate("/admin/dashboard");
+          navigate("/admin/dashboardadmin");
         } else if (user.role === "montir") {
-          navigate("/montir/dashboard");
+          navigate("/montir/dashboardmontir");
         } else if (user.role === "gudang") {
-          navigate("/gudang/dashboard");
+          navigate("/gudang/dashboardgudang");
         } else {
           navigate("/");
         }
