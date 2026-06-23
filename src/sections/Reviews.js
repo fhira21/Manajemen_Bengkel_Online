@@ -12,10 +12,29 @@ const Reviews = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from("reviews")
-        .select("*")
+        .select(`*`)
         .order("created_at", { ascending: false });
+      console.log("REVIEWS DATA:", data);
+      console.log("REVIEWS ERROR:", error);
 
-      if (!error) setReviews(data);
+      if (!error && data) {
+        // Map relational data to flat structure for UI
+        const formattedReviews = data.map((r) => {
+          const customerName = r.bookings?.customers?.nama || "Pelanggan Anonim";
+          const vehicle = r.bookings?.vehicles;
+          const carString = vehicle ? `${vehicle.merk} ${vehicle.model}` : "Kendaraan Volkswagen";
+
+          return {
+            id: r.id,
+            name: customerName,
+            car: carString,
+            rating: r.rating,
+            comment: r.comment,
+            created_at: r.created_at
+          };
+        });
+        setReviews(formattedReviews);
+      }
       setLoading(false);
     };
 
@@ -49,20 +68,20 @@ const Reviews = () => {
             className="flex justify-center"
           >
             <motion.div
-              animate={{ 
+              animate={{
                 rotate: 360,
                 scale: [1, 1.2, 1]
               }}
-              transition={{ 
-                repeat: Infinity, 
-                duration: 1.5, 
+              transition={{
+                repeat: Infinity,
+                duration: 1.5,
                 ease: "easeInOut"
               }}
               className="rounded-full h-12 w-12 border-t-2 border-b-2 border-yellow-400"
             ></motion.div>
           </motion.div>
         ) : (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
@@ -74,12 +93,12 @@ const Reviews = () => {
                   key={review.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ 
+                  transition={{
                     delay: index * 0.1,
                     type: "spring",
                     stiffness: 100
                   }}
-                  whileHover={{ 
+                  whileHover={{
                     y: -5,
                     boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)"
                   }}
@@ -98,7 +117,7 @@ const Reviews = () => {
                       })}
                     </span>
                   </div>
-                  
+
                   <div className="flex items-center gap-1 mb-4">
                     {Array.from({ length: 5 }).map((_, idx) => (
                       <motion.div
@@ -108,16 +127,16 @@ const Reviews = () => {
                       >
                         <Star
                           size={18}
-                          className={idx < review.rating 
-                            ? "text-yellow-400 fill-yellow-400" 
+                          className={idx < review.rating
+                            ? "text-yellow-400 fill-yellow-400"
                             : "text-gray-600"
                           }
                         />
                       </motion.div>
                     ))}
                   </div>
-                  
-                  <motion.p 
+
+                  <motion.p
                     whileHover={{ scale: 1.01 }}
                     className="text-gray-300 text-sm leading-relaxed"
                   >
