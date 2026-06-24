@@ -13,6 +13,8 @@ export default function DashboardAdmin() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState(null);
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
   const [sortConfig, setSortConfig] = useState({
     key: "tgl_booking",
     direction: "desc",
@@ -21,40 +23,27 @@ export default function DashboardAdmin() {
 
   const fetchBookings = async () => {
     setLoading(true);
+
     let query = supabase
-      .from("bookings")
-      .select(`
-        id, nama, no_telepon, plat_no, tipe_kendaraan, tgl_booking, status, id_user,
-        booking_services (
-          services (
-            nama
-          )
-        ),
-        users (
-          nama_lengkap
-        )
-      `);
+      .from("booking_dashboard_view")
+      .select("*");
 
-    // Apply date filter if set
     if (dateFilter) {
-      const startOfDay = new Date(dateFilter);
-      startOfDay.setHours(0, 0, 0, 0);
-
-      const endOfDay = new Date(dateFilter);
-      endOfDay.setHours(23, 59, 59, 999);
-
-      query = query
-        .gte('tgl_booking', startOfDay.toISOString())
-        .lte('tgl_booking', endOfDay.toISOString());
+      query = query.eq("tgl_booking", dateFilter);
     }
 
-    // Apply sorting
-    query = query.order(sortConfig.key, { ascending: sortConfig.direction === "asc" });
+    query = query.order("tgl_booking", {
+      ascending: true,
+    });
 
     const { data, error } = await query;
 
-    if (error) console.error("Error fetching bookings:", error);
-    else setBookings(data || []);
+    if (error) {
+      console.error(error);
+    } else {
+      setBookings(data || []);
+    }
+
     setLoading(false);
   };
 
@@ -68,18 +57,53 @@ export default function DashboardAdmin() {
     else setMontirs(data || []);
   };
 
-  const handleAssignMontir = async (bookingId, montirId) => {
+  const handleAssignMontir = async (
+    bookingId,
+    montirId
+  ) => {
     const { error } = await supabase
       .from("bookings")
-      .update({ id_user: montirId })
+      .update({
+        montir_id: montirId,
+        status: montirId ? "assigned" : "pending",
+      })
       .eq("id", bookingId);
 
     if (error) {
-      console.error("Gagal assign montir:", error);
-      alert("Gagal menugaskan montir: " + error.message);
-    } else {
-      fetchBookings();
+      console.error(error);
+      return;
     }
+
+    fetchBookings();
+  };
+
+  const handleViewDetail = (booking) => {
+    setSelectedBooking(booking);
+    setShowDetailModal(true);
+  };
+
+  const handleUpdateStatus = async (
+    bookingId,
+    status
+  ) => {
+    const { error } = await supabase
+      .from("bookings")
+      .update({
+        status,
+      })
+      .eq("id", bookingId);
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    await fetchBookings();
+
+    setSelectedBooking((prev) => ({
+      ...prev,
+      status,
+    }));
   };
 
   const handleSort = (key) => {
@@ -105,15 +129,31 @@ export default function DashboardAdmin() {
     fetchMontirs();
   }, [sortConfig, dateFilter]);
 
-  const filteredBookings = bookings.filter((booking) => {
-    const term = searchTerm.toLowerCase();
-    const matchesSearch = 
-      booking.plat_no?.toLowerCase().includes(term) ||
-      booking.nama?.toLowerCase().includes(term) ||
-      booking.no_telepon?.toLowerCase().includes(term);
-    const matchesStatus = statusFilter === "all" || booking.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const filteredBookings =
+    bookings.filter((booking) => {
+      const term =
+        searchTerm.toLowerCase();
+
+      const matchesSearch =
+        booking.customer_nama
+          ?.toLowerCase()
+          .includes(term) ||
+        booking.no_telepon
+          ?.toLowerCase()
+          .includes(term) ||
+        booking.plat_nomor
+          ?.toLowerCase()
+          .includes(term);
+
+      const matchesStatus =
+        statusFilter === "all" ||
+        booking.status === statusFilter;
+
+      return (
+        matchesSearch &&
+        matchesStatus
+      );
+    });
 
   const getTotalBooking = () => bookings.length;
   const getStatusCount = (status) =>
@@ -127,7 +167,7 @@ export default function DashboardAdmin() {
         return <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">In Progress</span>;
       case "done":
         return <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">Selesai</span>;
-      case "canceled":
+      case "cancelled":
         return <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-semibold">Batal</span>;
       default:
         return <span className="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-xs font-semibold">{status}</span>;
@@ -199,7 +239,7 @@ export default function DashboardAdmin() {
               className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex flex-col border-l-4 border-l-red-400"
             >
               <h2 className="text-gray-500 text-sm font-medium">Batal</h2>
-              <p className="text-3xl font-bold text-gray-800 mt-2">{getStatusCount("canceled")}</p>
+              <p className="text-3xl font-bold text-gray-800 mt-2">{getStatusCount("cancelled")}</p>
             </motion.div>
           </div>
 
@@ -268,7 +308,7 @@ export default function DashboardAdmin() {
                           <option value="pending">Pending</option>
                           <option value="in_progress">In Progress</option>
                           <option value="done">Selesai</option>
-                          <option value="canceled">Batal</option>
+                          <option value="cancelled">Batal</option>
                         </select>
                       </div>
 
@@ -336,10 +376,10 @@ export default function DashboardAdmin() {
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
-                              {booking.nama?.charAt(0).toUpperCase()}
+                              {booking.customer_nama?.charAt(0).toUpperCase()}
                             </div>
                             <div>
-                              <p className="font-bold text-gray-900">{booking.nama}</p>
+                              <p className="font-bold text-gray-900">{booking.customer_nama}</p>
                               <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5"><FiPhone /> {booking.no_telepon}</p>
                             </div>
                           </div>
@@ -347,9 +387,9 @@ export default function DashboardAdmin() {
                         <td className="px-6 py-4">
                           <div>
                             <p className="font-bold text-gray-900 font-mono bg-gray-100 px-2 py-0.5 rounded inline-block text-xs border border-gray-200">
-                              {booking.plat_no}
+                              {booking.plat_nomor}
                             </p>
-                            <p className="text-xs text-gray-500 mt-1 flex items-center gap-1"><FaCar /> {booking.tipe_kendaraan}</p>
+                            <p className="text-xs text-gray-500 mt-1 flex items-center gap-1"><FaCar /> {booking.merk} {booking.model}</p>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -368,7 +408,7 @@ export default function DashboardAdmin() {
                           <div className="flex items-center gap-2">
                             <FiTool className="text-gray-400" />
                             <select
-                              value={booking.id_user || ""}
+                              value={booking.montir_id || ""}
                               onChange={(e) => handleAssignMontir(booking.id, e.target.value)}
                               className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 hover:bg-white transition-colors cursor-pointer"
                             >
@@ -382,12 +422,12 @@ export default function DashboardAdmin() {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <a
-                            href={`/admin/nota/${booking.id}`}
+                          <button
+                            onClick={() => handleViewDetail(booking)}
                             className="text-sm font-semibold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors"
                           >
-                            Lihat Nota
-                          </a>
+                            Detail
+                          </button>
                         </td>
                       </tr>
                     ))
@@ -421,17 +461,46 @@ export default function DashboardAdmin() {
                   <div key={booking.id} className="p-4 hover:bg-gray-50 transition-colors">
                     <div className="flex justify-between items-start mb-3">
                       <div>
-                        <h3 className="font-bold text-gray-900 text-lg">{booking.nama}</h3>
+                        <h3 className="font-bold text-gray-900 text-lg">{booking.customer_nama}</h3>
                         <p className="text-sm text-gray-500 flex items-center gap-1 mt-0.5"><FiPhone className="text-xs" /> {booking.no_telepon}</p>
                       </div>
-                      {getStatusBadge(booking.status)}
+                      <select
+                        value={booking.status}
+                        onChange={(e) =>
+                          handleUpdateStatus(
+                            booking.id,
+                            e.target.value
+                          )
+                        }
+                        className="border border-gray-200 rounded-lg px-2 py-1"
+                      >
+                        <option value="pending">
+                          Pending
+                        </option>
+
+                        <option value="assigned">
+                          Assigned
+                        </option>
+
+                        <option value="in_progress">
+                          In Progress
+                        </option>
+
+                        <option value="done">
+                          Selesai
+                        </option>
+
+                        <option value="cancelled">
+                          Batal
+                        </option>
+                      </select>
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-3 mb-4 bg-gray-50 p-3 rounded-xl border border-gray-100">
                       <div>
                         <p className="text-xs text-gray-500 mb-0.5">Kendaraan</p>
-                        <p className="font-bold text-sm text-gray-800">{booking.tipe_kendaraan}</p>
-                        <p className="font-mono text-xs text-gray-600 mt-0.5 bg-gray-200 px-1.5 py-0.5 rounded inline-block">{booking.plat_no}</p>
+                        <p className="font-bold text-sm text-gray-800">{booking.merk} {booking.model}</p>
+                        <p className="font-mono text-xs text-gray-600 mt-0.5 bg-gray-200 px-1.5 py-0.5 rounded inline-block">{booking.plat_nomor}</p>
                       </div>
                       <div>
                         <p className="text-xs text-gray-500 mb-0.5">Jadwal</p>
@@ -448,7 +517,7 @@ export default function DashboardAdmin() {
                       <div>
                         <label className="block text-xs font-medium text-gray-500 mb-1">Montir Bertugas</label>
                         <select
-                          value={booking.id_user || ""}
+                          value={booking.montir_id || ""}
                           onChange={(e) => handleAssignMontir(booking.id, e.target.value)}
                           className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 bg-white"
                         >
@@ -460,12 +529,19 @@ export default function DashboardAdmin() {
                           ))}
                         </select>
                       </div>
-                      <a
-                        href={`/admin/nota/${booking.id}`}
+                      {/* <a
+                        href={`/ admin / nota / ${booking.id}`}
                         className="w-full text-center text-sm font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 py-2.5 rounded-lg transition-colors border border-blue-100"
                       >
                         Lihat Nota Booking
-                      </a>
+                      </a> */}
+
+                      <button
+                        onClick={() => handleViewDetail(booking)}
+                        className="w-full text-center text-sm font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 py-2.5 rounded-lg transition-colors border border-blue-100"
+                      >
+                        Detail
+                      </button>
                     </div>
                   </div>
                 ))
@@ -477,6 +553,278 @@ export default function DashboardAdmin() {
             </div>
           </motion.div>
         </div>
+
+        <AnimatePresence>
+          {showDetailModal &&
+            selectedBooking && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+              >
+                <motion.div
+                  initial={{
+                    scale: 0.95,
+                    opacity: 0,
+                  }}
+                  animate={{
+                    scale: 1,
+                    opacity: 1,
+                  }}
+                  exit={{
+                    scale: 0.95,
+                    opacity: 0,
+                  }}
+                  className="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-xl"
+                >
+                  <div className="p-6 border-b flex justify-between items-center">
+                    <h2 className="text-xl font-bold">
+                      Detail Booking
+                    </h2>
+
+                    <button
+                      onClick={() =>
+                        setShowDetailModal(
+                          false
+                        )
+                      }
+                      className="text-gray-500 hover:text-red-500"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  <div className="p-6 space-y-6">
+
+                    {/* Pelanggan */}
+                    <div>
+                      <h3 className="font-bold text-gray-800 mb-2">
+                        Pelanggan
+                      </h3>
+
+                      <div className="bg-gray-50 rounded-xl p-4">
+                        <p>
+                          <strong>Nama:</strong>{" "}
+                          {
+                            selectedBooking.customer_nama
+                          }
+                        </p>
+
+                        <p>
+                          <strong>Telepon:</strong>{" "}
+                          {
+                            selectedBooking.no_telepon
+                          }
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Kendaraan */}
+                    <div>
+                      <h3 className="font-bold text-gray-800 mb-2">
+                        Kendaraan
+                      </h3>
+
+                      <div className="bg-gray-50 rounded-xl p-4">
+                        <p>
+                          <strong>Plat:</strong>{" "}
+                          {
+                            selectedBooking.plat_nomor
+                          }
+                        </p>
+
+                        <p>
+                          <strong>Merk:</strong>{" "}
+                          {selectedBooking.merk}
+                        </p>
+
+                        <p>
+                          <strong>Model:</strong>{" "}
+                          {selectedBooking.model}
+                        </p>
+
+                        <p>
+                          <strong>Tipe:</strong>{" "}
+                          {
+                            selectedBooking.tipe_kendaraan
+                          }
+                        </p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="font-bold text-gray-800 mb-2">
+                        Service Dipilih
+                      </h3>
+
+                      <div className="bg-gray-50 rounded-xl p-4">
+                        {selectedBooking.service_list
+                          ?.split(", ")
+                          .map((item) => (
+                            <li key={item}>{item}</li>
+                          ))}
+                      </div>
+                    </div>
+
+                    {/* Booking */}
+                    <div>
+                      <h3 className="font-bold text-gray-800 mb-2">
+                        Booking
+                      </h3>
+
+                      <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+
+                        <p>
+                          <strong>
+                            Tanggal:
+                          </strong>{" "}
+                          {
+                            selectedBooking.tgl_booking
+                          }
+                        </p>
+
+                        <p>
+                          <strong>
+                            Catatan:
+                          </strong>{" "}
+                          {selectedBooking.catatan ||
+                            "-"}
+                        </p>
+
+                        {/* Status */}
+                        <div>
+                          <label className="block text-sm font-medium mb-1">
+                            Status
+                          </label>
+
+                          <select
+                            value={
+                              selectedBooking.status
+                            }
+                            onChange={(e) =>
+                              handleUpdateStatus(
+                                selectedBooking.id,
+                                e.target.value
+                              )
+                            }
+                            className="w-full border rounded-lg px-3 py-2"
+                          >
+                            <option value="pending">
+                              Pending
+                            </option>
+
+                            <option value="assigned">
+                              Assigned
+                            </option>
+
+                            <option value="in_progress">
+                              In Progress
+                            </option>
+
+                            <option value="done">
+                              Selesai
+                            </option>
+
+                            <option value="cancelled">
+                              Batal
+                            </option>
+                          </select>
+                        </div>
+
+                        {/* Montir */}
+                        <div>
+                          <label className="block text-sm font-medium mb-1">
+                            Montir
+                          </label>
+
+                          <select
+                            value={
+                              selectedBooking.montir_id ||
+                              ""
+                            }
+                            onChange={async (
+                              e
+                            ) => {
+                              await handleAssignMontir(
+                                selectedBooking.id,
+                                e.target.value
+                              );
+
+                              const montir =
+                                montirs.find(
+                                  (m) =>
+                                    m.id ===
+                                    e.target.value
+                                );
+
+                              setSelectedBooking(
+                                (
+                                  prev
+                                ) => ({
+                                  ...prev,
+                                  montir_id:
+                                    e.target.value,
+                                  montir_nama:
+                                    montir?.nama_lengkap,
+                                })
+                              );
+                            }}
+                            className="w-full border rounded-lg px-3 py-2"
+                          >
+                            <option value="">
+                              Belum Ditugaskan
+                            </option>
+
+                            {montirs.map(
+                              (montir) => (
+                                <option
+                                  key={
+                                    montir.id
+                                  }
+                                  value={
+                                    montir.id
+                                  }
+                                >
+                                  {
+                                    montir.nama_lengkap
+                                  }
+                                </option>
+                              )
+                            )}
+                          </select>
+                        </div>
+
+                      </div>
+                    </div>
+
+                  </div>
+
+                  <div className="border-t p-6 flex justify-end gap-3">
+
+                    <button
+                      onClick={() =>
+                        setShowDetailModal(
+                          false
+                        )
+                      }
+                      className="px-4 py-2 border rounded-lg"
+                    >
+                      Tutup
+                    </button>
+
+                    <a
+                      href={`/admin/nota/${selectedBooking.id}`}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    >
+                      Buat Nota
+                    </a>
+
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+        </AnimatePresence>
       </main>
     </div>
   );

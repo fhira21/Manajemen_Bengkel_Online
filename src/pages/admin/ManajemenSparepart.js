@@ -16,8 +16,10 @@ const ManajemenSparepart = () => {
   const [formData, setFormData] = useState({
     kode_part: "",
     nama: "",
-    harga: "",
-    stok_minimum: 5,
+    harga_beli: "",
+    harga_jual: "",
+    stok_minimum: "",
+    deskripsi: "",
   });
 
   const fetchSpareparts = async () => {
@@ -25,12 +27,15 @@ const ManajemenSparepart = () => {
     const { data, error } = await supabase
       .from("spareparts_with_stock")
       .select("*")
-      .order("kode_part", { ascending: true });
+      .order("kode_part");
 
     if (!error) {
-      setSpareparts(data || []);
-    } else {
-      console.error("Gagal mengambil data:", error.message);
+      const normalized = (data || []).map((item) => ({
+        ...item,
+        stok: item.stok,
+      }));
+
+      setSpareparts(normalized);
     }
     setIsLoading(false);
   };
@@ -45,12 +50,14 @@ const ManajemenSparepart = () => {
       setFormData({
         kode_part: item.kode_part || "",
         nama: item.nama || "",
-        harga: item.harga || "",
-        stok_minimum: item.stok_minimum || 5,
+        harga_beli: item.harga_beli || "",
+        harga_jual: item.harga_jual || "",
+        stok_minimum: item.stok_minimum || "",
+        deskripsi: item.deskripsi || "",
       });
     } else {
       setEditing(null);
-      setFormData({ kode_part: "", nama: "", harga: "", stok_minimum: 5 });
+      setFormData({ kode_part: "", nama: "", harga_beli: "", harga_jual: "", stok_minimum: "", deskripsi: "" });
     }
     setShowModal(true);
   };
@@ -58,7 +65,7 @@ const ManajemenSparepart = () => {
   const closeModal = () => {
     setShowModal(false);
     setEditing(null);
-    setFormData({ kode_part: "", nama: "", harga: "", stok_minimum: 5 });
+    setFormData({ kode_part: "", nama: "", harga_beli: "", harga_jual: "", stok_minimum: "", deskripsi: "" });
   };
 
   const handleSubmit = async (e) => {
@@ -67,8 +74,10 @@ const ManajemenSparepart = () => {
     const payload = {
       kode_part: formData.kode_part,
       nama: formData.nama,
-      harga: Number(formData.harga),
+      harga_beli: Number(formData.harga_beli),
+      harga_jual: Number(formData.harga_jual),
       stok_minimum: Number(formData.stok_minimum),
+      deskripsi: formData.deskripsi,
     };
 
     try {
@@ -103,9 +112,9 @@ const ManajemenSparepart = () => {
     }
   };
 
-  const getStatus = (current_stock, stok_minimum) => {
-    if (current_stock === 0) return "habis";
-    if (current_stock <= stok_minimum) return "menipis";
+  const getStatus = (stok, stok_minimum) => {
+    if (stok === 0) return "habis";
+    if (stok <= stok_minimum) return "menipis";
     return "aman";
   };
 
@@ -124,11 +133,11 @@ const ManajemenSparepart = () => {
 
   const filteredData = spareparts.filter((item) => {
     const term = search.toLowerCase();
-    const matchesSearch = 
+    const matchesSearch =
       item.nama?.toLowerCase().includes(term) ||
       item.kode_part?.toLowerCase().includes(term);
 
-    const status = getStatus(item.current_stock || 0, item.stok_minimum || 0);
+    const status = getStatus(item.stok || 0, item.stok_minimum || 0);
     const matchesStatus = statusFilter === "semua" || status === statusFilter;
 
     return matchesSearch && matchesStatus;
@@ -144,9 +153,9 @@ const ManajemenSparepart = () => {
 
   // KPI Calculations
   const totalSpareparts = spareparts.length;
-  const totalStock = spareparts.reduce((sum, item) => sum + (item.current_stock || 0), 0);
-  const lowStockCount = spareparts.filter(i => (i.current_stock || 0) > 0 && (i.current_stock || 0) <= (i.stok_minimum || 0)).length;
-  const outOfStockCount = spareparts.filter(i => (i.current_stock || 0) === 0).length;
+  const totalStock = spareparts.reduce((sum, item) => sum + (item.stok || 0), 0);
+  const lowStockCount = spareparts.filter(i => (i.stok || 0) > 0 && (i.stok || 0) <= (i.stok_minimum || 0)).length;
+  const outOfStockCount = spareparts.filter(i => (i.stok || 0) === 0).length;
 
   return (
     <div className="flex bg-gray-50 min-h-screen">
@@ -242,6 +251,7 @@ const ManajemenSparepart = () => {
                   <tr>
                     <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Kode</th>
                     <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Nama Sparepart</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Harga Beli</th>
                     <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Harga Satuan</th>
                     <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Stok Saat Ini</th>
                     <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Batas Min</th>
@@ -264,7 +274,7 @@ const ManajemenSparepart = () => {
                     </tr>
                   ) : (
                     filteredData.map((item) => {
-                      const current = item.current_stock || 0;
+                      const current = item.stok || 0;
                       const min = item.stok_minimum || 0;
                       const status = getStatus(current, min);
 
@@ -276,7 +286,8 @@ const ManajemenSparepart = () => {
                             </span>
                           </td>
                           <td className="px-6 py-4 font-bold text-gray-900">{item.nama}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-gray-700 font-medium">{formatPrice(item.harga)}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-gray-700 font-medium">{formatPrice(item.harga_jual)}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-gray-700 font-medium">{formatPrice(item.harga_beli)}</td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className="text-lg font-black text-gray-900">{current}</span>
                             <span className="text-xs text-gray-500 ml-1">pcs</span>
@@ -311,7 +322,7 @@ const ManajemenSparepart = () => {
                 <div className="p-8 text-center text-gray-500">Tidak ada sparepart.</div>
               ) : (
                 filteredData.map((item) => {
-                  const current = item.current_stock || 0;
+                  const current = item.stok || 0;
                   const min = item.stok_minimum || 0;
                   const status = getStatus(current, min);
 
@@ -326,11 +337,11 @@ const ManajemenSparepart = () => {
                         </div>
                         {getStatusBadge(status)}
                       </div>
-                      
+
                       <div className="flex justify-between items-center bg-gray-50 p-3 rounded-xl border border-gray-100 mb-3 mt-2">
                         <div>
                           <p className="text-xs text-gray-500">Harga Satuan</p>
-                          <p className="font-bold text-gray-800 text-sm">{formatPrice(item.harga)}</p>
+                          <p className="font-bold text-gray-800 text-sm">{formatPrice(item.harga_jual)}</p>
                         </div>
                         <div className="text-right">
                           <p className="text-xs text-gray-500">Sisa Stok</p>
@@ -376,7 +387,7 @@ const ManajemenSparepart = () => {
                   </h2>
                   <button onClick={closeModal} className="text-gray-400 hover:text-gray-600 p-2"><FiXCircle className="text-xl" /></button>
                 </div>
-                
+
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="col-span-2 sm:col-span-1">
@@ -402,7 +413,7 @@ const ManajemenSparepart = () => {
                       />
                     </div>
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nama Sparepart</label>
                     <input
@@ -414,15 +425,62 @@ const ManajemenSparepart = () => {
                       className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
-                  
+
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Harga (Rp)</label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                      Harga Beli (Rp)
+                    </label>
+
                     <input
                       type="number"
-                      placeholder="Cth: 150000"
-                      value={formData.harga}
-                      onChange={(e) => setFormData({ ...formData, harga: e.target.value })}
+                      placeholder="Contoh: 120000"
+                      value={formData.harga_beli}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          harga_beli: e.target.value,
+                        })
+                      }
                       required
+                      className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                      Harga Jual (Rp)
+                    </label>
+
+                    <input
+                      type="number"
+                      placeholder="Contoh: 150000"
+                      value={formData.harga_jual}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          harga_jual: e.target.value,
+                        })
+                      }
+                      required
+                      className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                      Deskripsi
+                    </label>
+
+                    <textarea
+                      rows={4}
+                      placeholder="Keterangan sparepart..."
+                      value={formData.deskripsi}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          deskripsi: e.target.value,
+                        })
+                      }
                       className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
