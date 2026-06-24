@@ -40,12 +40,13 @@ const LoginPage = () => {
         .from("users")
         .select("*")
         .eq("username", formData.username)
-        .eq("password", formData.password);
+        .eq("password", formData.password)
+        .eq("is_active", true);
 
       if (error) throw error;
 
       if (!users || users.length === 0) {
-        setError("Invalid username or password");
+        setError("Username atau password salah, atau akun tidak aktif");
       } else {
         const user = users[0];
 
@@ -53,19 +54,19 @@ const LoginPage = () => {
           "currentUser",
           JSON.stringify({
             id: user.id, 
-            name: user.nama_lengkap, 
-            role: user.role,
+            nama_lengkap: user.nama_lengkap, 
             username: user.username,
-            email: user.email
+            email: user.email,
+            role: user.role
           })
         );
 
         if (user.role === "admin") {
-          navigate("/dashboardadmin");
+          navigate("/admin/dashboardadmin");
         } else if (user.role === "montir") {
-          navigate("/dashboardmontir");
+          navigate("/montir/dashboardmontir");
         } else if (user.role === "gudang") {
-          navigate("/dashboardgudang");
+          navigate("/gudang/dashboardgudang");
         } else {
           navigate("/");
         }

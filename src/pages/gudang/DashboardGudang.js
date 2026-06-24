@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import SidebarGudang from "../../components/SideBarGudang";
 import SparepartMasuk from "./SparepartMasuk";
 import SparepartKeluar from "./SparepartKeluar";
-import { FiSearch, FiAlertTriangle, FiArrowUp, FiArrowDown, FiBox, FiPackage } from "react-icons/fi";
+import { FiSearch, FiAlertTriangle, FiBox, FiPackage, FiCheckCircle, FiXCircle, FiTrendingUp, FiLayers } from "react-icons/fi";
 import { motion } from "framer-motion";
 import { supabase } from "../../lib/supabaseClient";
 
@@ -12,17 +12,59 @@ const DashboardGudang = () => {
   const [activeMenu, setActiveMenu] = useState("dashboard");
   const [filterStokRendah, setFilterStokRendah] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState("");
-  const [laporan, setLaporan] = useState([]);
+
+  const [sparepartsData, setSparepartsData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchLaporan = async () => {
+  const [stats, setStats] = useState({
+    totalSpareparts: 0,
+    totalStock: 0,
+    lowStockItems: 0,
+    todaysTransactions: 0
+  });
+
+  const fetchDashboardData = async () => {
     setIsLoading(true);
-    const { data, error } = await supabase.from("spareparts_with_stok").select("*");
-    if (error) {
-      console.error("Gagal mengambil data:", error.message);
-    } else {
-      setLaporan(data);
+
+    // Fetch spareparts_with_stock view
+    const { data: spData, error: spError } = await supabase
+      .from("spareparts_with_stock")
+      .select("*")
+      .order("nama");
+
+    // Fetch today's transactions count
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const { count: txCount, error: txError } = await supabase
+      .from("inventory_transactions")
+      .select("*", { count: "exact", head: true })
+      .gte("created_at", today.toISOString());
+
+    if (spError) console.error("Error fetching spareparts:", spError);
+    if (txError) console.error("Error fetching transactions:", txError);
+
+    if (spData) {
+      setSparepartsData(spData);
+
+      const totalSp = spData.length;
+      const totalSt = spData.reduce(
+        (acc, curr) => acc + Number(curr.stok || 0),
+        0
+      );
+
+      const lowSt = spData.filter(
+        item => Number(item.stok || 0) <= Number(item.stok_minimum || 0)
+      ).length;
+
+
+      setStats({
+        totalSpareparts: totalSp,
+        totalStock: totalSt,
+        lowStockItems: lowSt,
+        todaysTransactions: txCount || 0
+      });
     }
+
     setIsLoading(false);
   };
 
@@ -30,97 +72,101 @@ const DashboardGudang = () => {
     if (!user?.id) return;
     const { data, error } = await supabase
       .from("users")
-      .select("nama")
+      .select("nama_lengkap")
       .eq("id", user.id)
       .single();
 
-    if (error) {
-      console.error("Gagal mengambil data user:", error.message);
-    } else {
+    if (!error && data) {
       setUserData(data);
     }
   };
 
   useEffect(() => {
-    fetchLaporan();
+    fetchDashboardData();
     fetchUserData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const filteredLaporan = laporan.filter(item => {
-    const matchSearch = item.nama?.toLowerCase().includes(searchKeyword.toLowerCase());
-    const matchStok = !filterStokRendah || item.stok < 10;
+  const getStatus = (stok, stok_minimum) => {
+    const stock = Number(stok || 0);
+    const min = Number(stok_minimum || 0);
+    if (stock === 0) return { label: "Habis", color: "bg-red-50 text-red-700 border-red-200", icon: <FiXCircle className="w-3.5 h-3.5 mr-1.5" /> };
+    if (stock <= min) return { label: "Menipis", color: "bg-orange-50 text-orange-700 border-orange-200", icon: <FiAlertTriangle className="w-3.5 h-3.5 mr-1.5" /> };
+    return { label: "Aman", color: "bg-green-50 text-green-700 border-green-200", icon: <FiCheckCircle className="w-3.5 h-3.5 mr-1.5" /> };
+  };
+
+  const filteredSpareparts = sparepartsData.filter(item => {
+    const keyword = searchKeyword.toLowerCase();
+    const matchSearch = item.nama?.toLowerCase().includes(keyword) ||
+      item.kode_part?.toLowerCase().includes(keyword);
+    const matchStok = !filterStokRendah || Number(item.current_stock) <= Number(item.stok_minimum);
     return matchSearch && matchStok;
   });
-
-  const today = new Date();
-  const totalMasukBulanIni = laporan.reduce((sum, item) => sum + (item.masuk_bulan_ini || 0), 0);
-  const totalKeluarBulanIni = laporan.reduce((sum, item) => sum + (item.keluar_bulan_ini || 0), 0);
-  const totalSisaStock = laporan.reduce((sum, item) => sum + (item.stok || 0), 0);
 
   const renderContent = () => {
     switch (activeMenu) {
       case "dashboard":
         return (
           <>
-            {/* Statistik Ringkasan */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6"
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
             >
-              {/* Kartu Ringkasan */}
-              <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-green-500 hover:shadow-lg transition-shadow">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-500 font-medium">Stok Masuk Bulan Ini</p>
-                    <h3 className="text-2xl font-bold text-gray-800 mt-1">{totalMasukBulanIni}</h3>
-                  </div>
-                  <div className="bg-green-100 p-3 rounded-full">
-                    <FiArrowDown className="text-green-600 text-xl" />
-                  </div>
+              {/* Stat Cards */}
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
+                <div>
+                  <p className="text-sm font-semibold text-gray-500 mb-1 uppercase tracking-wider">Total Sparepart</p>
+                  <h3 className="text-3xl font-black text-gray-800">{stats.totalSpareparts}</h3>
                 </div>
-                <p className="text-xs text-gray-400 mt-2">Update terakhir: {today.toLocaleDateString()}</p>
+                <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 text-2xl shadow-inner">
+                  <FiBox />
+                </div>
               </div>
 
-              <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-red-500 hover:shadow-lg transition-shadow">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-500 font-medium">Stok Keluar Bulan Ini</p>
-                    <h3 className="text-2xl font-bold text-gray-800 mt-1">{totalKeluarBulanIni}</h3>
-                  </div>
-                  <div className="bg-red-100 p-3 rounded-full">
-                    <FiArrowUp className="text-red-600 text-xl" />
-                  </div>
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
+                <div>
+                  <p className="text-sm font-semibold text-gray-500 mb-1 uppercase tracking-wider">Total Fisik Stok</p>
+                  <h3 className="text-3xl font-black text-gray-800">{stats.totalStock}</h3>
                 </div>
-                <p className="text-xs text-gray-400 mt-2">Update terakhir: {today.toLocaleDateString()}</p>
+                <div className="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 text-2xl shadow-inner">
+                  <FiLayers />
+                </div>
               </div>
 
-              <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-blue-500 hover:shadow-lg transition-shadow">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-500 font-medium">Total Sisa Stok</p>
-                    <h3 className="text-2xl font-bold text-gray-800 mt-1">{totalSisaStock}</h3>
-                  </div>
-                  <div className="bg-blue-100 p-3 rounded-full">
-                    <FiPackage className="text-blue-600 text-xl" />
-                  </div>
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
+                <div>
+                  <p className="text-sm font-semibold text-gray-500 mb-1 uppercase tracking-wider">Stok Menipis</p>
+                  <h3 className="text-3xl font-black text-red-600">{stats.lowStockItems}</h3>
                 </div>
-                <p className="text-xs text-gray-400 mt-2">Update terakhir: {today.toLocaleDateString()}</p>
+                <div className="w-14 h-14 bg-red-50 rounded-2xl flex items-center justify-center text-red-600 text-2xl shadow-inner">
+                  <FiAlertTriangle />
+                </div>
+              </div>
+
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
+                <div>
+                  <p className="text-sm font-semibold text-gray-500 mb-1 uppercase tracking-wider">Transaksi Harian</p>
+                  <h3 className="text-3xl font-black text-gray-800">{stats.todaysTransactions}</h3>
+                </div>
+                <div className="w-14 h-14 bg-green-50 rounded-2xl flex items-center justify-center text-green-600 text-2xl shadow-inner">
+                  <FiTrendingUp />
+                </div>
               </div>
             </motion.div>
 
-            {/* Tabel */}
+            {/* Table Section */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.3 }}
-              className="bg-white shadow-lg rounded-lg p-6 mb-6 border border-gray-100"
+              transition={{ duration: 0.3, delay: 0.1 }}
+              className="bg-white shadow-sm rounded-2xl border border-gray-100 overflow-hidden"
             >
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-                <h2 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
-                  <FiBox className="text-blue-500" />
-                  Laporan Stok Sparepart
+              <div className="p-6 border-b border-gray-100 flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white">
+                <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                  <FiPackage className="text-blue-600" />
+                  Monitoring Stok Sparepart
                 </h2>
 
                 <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
@@ -130,62 +176,76 @@ const DashboardGudang = () => {
                     </div>
                     <input
                       type="text"
-                      placeholder="Cari nama sparepart..."
+                      placeholder="Cari kode atau nama..."
                       value={searchKeyword}
                       onChange={(e) => setSearchKeyword(e.target.value)}
-                      className="pl-10 pr-4 py-2 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-all"
                     />
                   </div>
 
-                  <label className="flex items-center gap-2 bg-gray-100 px-4 py-2 rounded-lg cursor-pointer hover:bg-gray-200 transition-colors">
+                  <label className="flex items-center gap-2 bg-gray-50 border border-gray-200 px-4 py-2.5 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors select-none">
                     <input
                       type="checkbox"
                       checked={filterStokRendah}
                       onChange={(e) => setFilterStokRendah(e.target.checked)}
-                      className="rounded text-blue-600 focus:ring-blue-500"
+                      className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-gray-300 cursor-pointer"
                     />
-                    <span className="flex items-center gap-1 text-sm">
-                      <FiAlertTriangle className="text-yellow-500" />
-                      Stok Rendah (kurang dari 10)
+                    <span className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
+                      Tampilkan Stok Rendah
                     </span>
                   </label>
                 </div>
               </div>
 
               {isLoading ? (
-                <div className="flex justify-center items-center h-64">
-                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                <div className="flex justify-center items-center h-64 bg-gray-50/50">
+                  <div className="animate-spin rounded-full h-10 w-10 border-4 border-gray-200 border-t-blue-600"></div>
                 </div>
               ) : (
-                <div className="overflow-x-auto rounded-lg border border-gray-200">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-100">
+                    <thead className="bg-gray-50/80">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Sparepart</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stok Masuk</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stok Keluar</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sisa Stok</th>
+                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Kode Part</th>
+                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Nama Sparepart</th>
+                        <th className="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Stok Minimum</th>
+                        <th className="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Sisa Stok</th>
+                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {filteredLaporan.map((item, index) => (
-                        <tr key={item.id_sparepart} className={item.stok < 5 ? "bg-red-50 hover:bg-red-100" : "hover:bg-gray-50"}>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{index + 1}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.nama}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.masuk_bulan_ini}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.keluar_bulan_ini}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <span className={`px-2 py-1 rounded-full text-xs ${item.stok < 5 ? 'bg-red-100 text-red-800' : item.stok < 10 ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}`}>
-                              {item.stok}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                      {filteredLaporan.length === 0 && (
+                    <tbody className="bg-white divide-y divide-gray-50">
+                      {filteredSpareparts.map((item) => {
+                        const statusObj = getStatus(
+                          item.stok,
+                          item.stok_minimum
+                        );
+                         return (
+                          <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">{item.kode_part}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-700">{item.nama}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">{item.stok_minimum}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                              <span className="text-sm font-bold text-gray-900 bg-gray-100 px-3 py-1 rounded-lg">
+                                {item.stok || 0}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border ${statusObj.color}`}>
+                                {statusObj.icon}
+                                {statusObj.label}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                      {filteredSpareparts.length === 0 && (
                         <tr>
-                          <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
-                            {searchKeyword || filterStokRendah ? "Tidak ada data yang sesuai dengan filter" : "Tidak ada data"}
+                          <td colSpan="5" className="px-6 py-12 text-center">
+                            <div className="flex flex-col items-center justify-center text-gray-400">
+                              <FiSearch className="w-12 h-12 mb-3 text-gray-300" />
+                              <p className="text-lg font-medium text-gray-600">Tidak ada data sparepart</p>
+                              <p className="text-sm">Coba sesuaikan kata kunci pencarian atau filter Anda.</p>
+                            </div>
                           </td>
                         </tr>
                       )}
@@ -206,25 +266,30 @@ const DashboardGudang = () => {
   };
 
   return (
-    <div className="flex">
+    <div className="flex bg-gray-50 min-h-screen">
       <SidebarGudang activeMenu={activeMenu} setActiveMenu={setActiveMenu} />
-      <main className="flex-1 md:ml-64 p-4">
+      <main className="flex-1 md:ml-64 p-6 lg:p-8">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
+          className="max-w-7xl mx-auto"
         >
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 bg-white p-4 rounded-lg shadow-sm">
+          {/* Header */}
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8">
             <div>
-              <h1 className="text-xl md:text-2xl font-bold text-gray-800">
-                Halo, {userData?.nama }
+              <p className="text-sm font-semibold text-blue-600 mb-1 tracking-wider uppercase">Warehouse Management</p>
+              <h1 className="text-2xl md:text-3xl font-black text-gray-900">
+                Dashboard Gudang
               </h1>
-              <p className="text-sm text-gray-500">Selamat datang di Dashboard Gudang</p>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="hidden sm:flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-lg">
-                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                <span className="text-sm text-gray-700">Online</span>
+            <div className="flex items-center gap-4 bg-white px-5 py-3 rounded-2xl shadow-sm border border-gray-100">
+              <div className="flex flex-col text-right">
+                <span className="text-xs text-gray-500 font-medium">Masuk sebagai</span>
+                <span className="text-sm font-bold text-gray-900">{userData?.nama_lengkap || user?.name || "Loading..."}</span>
+              </div>
+              <div className="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-lg shadow-inner">
+                {userData?.nama_lengkap?.charAt(0) || user?.name?.charAt(0) || "W"}
               </div>
             </div>
           </div>

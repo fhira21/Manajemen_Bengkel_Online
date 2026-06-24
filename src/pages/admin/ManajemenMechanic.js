@@ -24,7 +24,10 @@ const ManajemenKaryawan = () => {
     const fetchUsers = async () => {
       setIsLoading(true);
       try {
-        const { data, error } = await supabase.from("users").select("*");
+        const { data, error } = await supabase
+          .from("users")
+          .select("*")
+          .in("role", ["montir", "gudang"]);
 
         if (error) throw error;
 
@@ -80,6 +83,23 @@ const ManajemenKaryawan = () => {
       setUsers((prev) => prev.filter((u) => u.id !== id));
     } catch (err) {
       alert("Gagal menghapus data: " + err.message);
+    }
+  };
+
+  const handleToggleActive = async (user) => {
+    try {
+      const { error } = await supabase
+        .from("users")
+        .update({ is_active: !user.is_active })
+        .eq("id", user.id);
+
+      if (error) throw error;
+
+      setUsers((prev) =>
+        prev.map((u) => (u.id === user.id ? { ...u, is_active: !user.is_active } : u))
+      );
+    } catch (err) {
+      alert("Gagal memperbarui status: " + err.message);
     }
   };
 
@@ -183,7 +203,6 @@ const ManajemenKaryawan = () => {
                   className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                 >
                   <option value="">Semua Role</option>
-                  <option value="admin">Admin</option>
                   <option value="montir">Montir</option>
                   <option value="gudang">Gudang</option>
                 </select>
@@ -273,7 +292,7 @@ const ManajemenKaryawan = () => {
                 <table className="min-w-full divide-y divide-gray-200 text-sm">
                   <thead className="bg-gray-50">
                     <tr>
-                      {["No", "Nama", "Username", "Role", "Aksi"].map(
+                      {["No", "Nama", "Username", "Role", "Status", "Aksi"].map(
                         (header, index) => (
                           <motion.th
                             key={header}
@@ -325,8 +344,39 @@ const ManajemenKaryawan = () => {
                             {user.role}
                           </motion.span>
                         </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span
+                            className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                              user.is_active
+                                ? "bg-green-100 text-green-800"
+                                : "bg-red-100 text-red-800"
+                            }`}
+                          >
+                            {user.is_active ? "Aktif" : "Non-Aktif"}
+                          </span>
+                        </td>
                         <td className="v whitespace-nowrap">
                           <div className="flex gap-2">
+                            <motion.button
+                              whileHover={{ 
+                                scale: 1.1,
+                                color: "#16a34a"
+                              }}
+                              whileTap={{ scale: 0.9 }}
+                              className={`${user.is_active ? "text-orange-500 hover:text-orange-700" : "text-green-500 hover:text-green-700"} flex items-center gap-1 text-sm`}
+                              onClick={() => handleToggleActive(user)}
+                            >
+                              {user.is_active ? (
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                                </svg>
+                              ) : (
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                              )}
+                              {user.is_active ? "Non-Aktifkan" : "Aktifkan"}
+                            </motion.button>
                             <motion.button
                               whileHover={{ 
                                 scale: 1.1,
@@ -455,7 +505,6 @@ const ManajemenKaryawan = () => {
                       }
                       className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                     >
-                      <option value="admin">Admin</option>
                       <option value="montir">Montir</option>
                       <option value="gudang">Gudang</option>
                     </select>
@@ -595,7 +644,6 @@ const ManajemenKaryawan = () => {
                       className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                     >
                       <option value="">Pilih Role</option>
-                      <option value="admin">Admin</option>
                       <option value="montir">Montir</option>
                       <option value="gudang">Gudang</option>
                     </select>
@@ -629,9 +677,10 @@ const ManajemenKaryawan = () => {
                     <motion.button
                       type="button"
                       onClick={async () => {
+                        const newUserPayload = { ...newUser, is_active: true };
                         const { error } = await supabase
                           .from("users")
-                          .insert([newUser]);
+                          .insert([newUserPayload]);
                         if (error) {
                           alert("Gagal menambahkan karyawan: " + error.message);
                         } else {

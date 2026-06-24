@@ -31,7 +31,7 @@ function MainLayout() {
       <Route path="/login" element={<LoginPage />} />
       
 
-      <Route path="/dashboardadmin" element={<DashboardAdmin />} />
+      <Route path="/admin/dashboardadmin" element={<DashboardAdmin />} />
       <Route path="/admin/service" element={<ManajemenService />} />
       <Route path="/admin/Pelanggan" element={<ManajemenPelanggan />} />
       <Route path="/admin/karyawan" element={<ManajemenKaryawan />} />
@@ -39,10 +39,10 @@ function MainLayout() {
       <Route path="/admin/promo" element={<ManajemenPromo />} />
       <Route path="/admin/nota/:id" element={<NotaBooking />} />
 
-      <Route path="/dashboardmontir" element={<DashboardMontir />} />
-      <Route path="/riwayatmontir" element={<RiwayatMontir />} />
+      <Route path="/montir/dashboardmontir" element={<DashboardMontir />} />
+      <Route path="/montir/riwayatmontir" element={<RiwayatMontir />} />
 
-      <Route path="/dashboardgudang" element={<DashboardGudang />} />
+      <Route path="/gudang/dashboardgudang" element={<DashboardGudang />} />
       <Route path="/gudang/masuk" element={<SparepartMasuk />} />
       <Route path="/gudang/keluar" element={<ManajemenSparepartKeluar />} />
 
