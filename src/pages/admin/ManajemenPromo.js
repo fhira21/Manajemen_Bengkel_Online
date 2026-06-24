@@ -9,12 +9,12 @@ const ManajemenPromo = () => {
   const [form, setForm] = useState({
     kode_promo: "",
     nama: "",
-    description: "",
-    harga_asli: "",
-    harga_promo: "",
-    berlaku_mulai: "",
-    berlaku_sampai: "",
-    image: null,
+    deskripsi: "",
+    tipe_promo: "discount_item",
+    nilai_diskon: "",
+    aktif: true,
+    tgl_mulai: "",
+    tgl_selesai: "",
   });
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -38,16 +38,13 @@ const ManajemenPromo = () => {
     const promoData = {
       kode_promo: form.kode_promo,
       nama: form.nama,
-      description: form.description,
-      harga_asli: parseInt(form.harga_asli),
-      harga_promo: parseInt(form.harga_promo),
-      berlaku_mulai: form.berlaku_mulai,
-      berlaku_sampai: form.berlaku_sampai,
+      deskripsi: form.deskripsi,
+      tipe_promo: form.tipe_promo,
+      nilai_diskon: parseInt(form.nilai_diskon) || 0,
+      aktif: form.aktif,
+      tgl_mulai: form.tgl_mulai,
+      tgl_selesai: form.tgl_selesai,
     };
-
-    if (form.image && form.image.startsWith("data:image")) {
-      promoData.image = form.image;
-    }
 
     try {
       let result;
@@ -74,12 +71,12 @@ const ManajemenPromo = () => {
       setForm({
         kode_promo: "",
         nama: "",
-        description: "",
-        harga_asli: "",
-        harga_promo: "",
-        berlaku_mulai: "",
-        berlaku_sampai: "",
-        image: null,
+        deskripsi: "",
+        tipe_promo: "discount_item",
+        nilai_diskon: "",
+        aktif: true,
+        tgl_mulai: "",
+        tgl_selesai: "",
       });
     } catch (error) {
       alert("Gagal menyimpan data: " + error.message);
@@ -87,17 +84,11 @@ const ManajemenPromo = () => {
   };
 
   const handleChange = (e) => {
-    const { name, value, files } = e.target;
-    if (name === "image" && files.length > 0) {
-      const file = files[0];
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setForm((prev) => ({ ...prev, image: reader.result }));
-      };
-      reader.readAsDataURL(file);
-    } else {
-      setForm((prev) => ({ ...prev, [name]: value }));
-    }
+    const { name, value, type, checked } = e.target;
+    setForm((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
   };
 
   const openEditForm = (promo) => {
@@ -105,12 +96,12 @@ const ManajemenPromo = () => {
     setForm({
       kode_promo: promo.kode_promo || "",
       nama: promo.nama || "",
-      description: promo.description || "",
-      harga_asli: promo.harga_asli || "",
-      harga_promo: promo.harga_promo || "",
-      berlaku_mulai: promo.berlaku_mulai || "",
-      berlaku_sampai: promo.berlaku_sampai || "",
-      image: promo.image || null,
+      deskripsi: promo.deskripsi || "",
+      tipe_promo: promo.tipe_promo || "discount_item",
+      nilai_diskon: promo.nilai_diskon || "",
+      aktif: promo.aktif ?? true,
+      tgl_mulai: promo.tgl_mulai ? promo.tgl_mulai.split("T")[0] : "",
+      tgl_selesai: promo.tgl_selesai ? promo.tgl_selesai.split("T")[0] : "",
     });
     setIsFormOpen(true);
   };
@@ -141,6 +132,7 @@ const ManajemenPromo = () => {
   };
 
   const formatDate = (dateString) => {
+    if (!dateString) return "-";
     const options = { day: "numeric", month: "short", year: "numeric" };
     return new Date(dateString).toLocaleDateString("id-ID", options);
   };
@@ -150,7 +142,7 @@ const ManajemenPromo = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
-      className="flex flex-col md:flex-row"
+      className="flex flex-col md:flex-row bg-gray-50 min-h-screen"
     >
       <SidebarAdmin />
 
@@ -158,38 +150,44 @@ const ManajemenPromo = () => {
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.4 }}
-        className="flex-1 md:ml-64 p-4 sm:p-6"
+        className="flex-1 md:ml-64 p-4 sm:p-6 lg:p-8"
       >
         {/* Header */}
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-          <motion.h1
-            initial={{ x: -20 }}
-            animate={{ x: 0 }}
-            className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800"
-          >
-            Manajemen Promo
-          </motion.h1>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+          <div>
+            <motion.h1
+              initial={{ x: -20 }}
+              animate={{ x: 0 }}
+              className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight"
+            >
+              Manajemen Promo
+            </motion.h1>
+            <p className="text-gray-500 mt-1 text-sm">Kelola diskon dan penawaran bundling untuk pelanggan.</p>
+          </div>
 
           <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.02, boxShadow: "0 10px 15px -3px rgba(37, 99, 235, 0.2)" }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => {
               setIsFormOpen(true);
               setSelectedPromo(null);
               setForm({
                 kode_promo: "",
                 nama: "",
-                description: "",
-                harga_asli: "",
-                harga_promo: "",
-                berlaku_mulai: "",
-                berlaku_sampai: "",
-                image: null,
+                deskripsi: "",
+                tipe_promo: "discount_item",
+                nilai_diskon: "",
+                aktif: true,
+                tgl_mulai: "",
+                tgl_selesai: "",
               });
             }}
-            className="w-full sm:w-auto px-4 py-2 sm:px-5 sm:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm sm:text-base transition-all shadow-md"
+            className="w-full sm:w-auto px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all shadow-md flex items-center justify-center gap-2"
           >
-            + Tambah Promo
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+            </svg>
+            Tambah Promo
           </motion.button>
         </div>
 
@@ -200,191 +198,191 @@ const ManajemenPromo = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 overflow-auto"
+              className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-auto py-10"
             >
               <motion.div
-                initial={{ scale: 0.9, y: 20 }}
-                animate={{ scale: 1, y: 0 }}
-                exit={{ scale: 0.9, y: 20 }}
-                className="bg-white rounded-xl shadow-2xl w-full max-w-full md:max-w-2xl mx-2 sm:mx-4"
+                initial={{ scale: 0.95, y: 20, opacity: 0 }}
+                animate={{ scale: 1, y: 0, opacity: 1 }}
+                exit={{ scale: 0.95, y: 20, opacity: 0 }}
+                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden"
               >
                 {/* Header Form */}
-                <div className="flex justify-between items-center border-b p-3 sm:p-4 sticky top-0 bg-white">
-                  <h2 className="text-lg sm:text-xl font-bold text-gray-800">
+                <div className="flex justify-between items-center border-b border-gray-100 p-5 bg-gray-50">
+                  <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                    <span className="bg-blue-100 text-blue-600 p-1.5 rounded-lg">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                      </svg>
+                    </span>
                     {selectedPromo ? "Edit Promo" : "Tambah Promo Baru"}
                   </h2>
                   <button
                     onClick={() => setIsFormOpen(false)}
-                    className="text-gray-500 hover:text-gray-700 text-xl"
+                    className="text-gray-400 hover:text-gray-600 hover:bg-gray-200 p-2 rounded-full transition-colors"
                   >
-                    ✕
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
                   </button>
                 </div>
 
                 {/* Form */}
-                <form onSubmit={handleSubmit} className="p-3 sm:p-4 space-y-4">
+                <form onSubmit={handleSubmit} className="p-6 space-y-5">
                   {/* Grid Form */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                         Kode Promo
                       </label>
                       <input
                         type="text"
                         name="kode_promo"
-                        placeholder="Kode Promo"
+                        placeholder="Contoh: VW-SUMMER"
                         value={form.kode_promo}
                         onChange={handleChange}
                         required
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 sm:px-4 sm:py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                        className="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                         Nama Promo
                       </label>
                       <input
                         type="text"
                         name="nama"
-                        placeholder="Nama Promo"
+                        placeholder="Nama Kampanye"
                         value={form.nama}
                         onChange={handleChange}
                         required
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 sm:px-4 sm:py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                        className="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                       />
                     </div>
                   </div>
 
                   {/* Deskripsi */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                       Deskripsi
                     </label>
                     <textarea
-                      name="description"
-                      placeholder="Deskripsi Promo"
-                      value={form.description}
+                      name="deskripsi"
+                      placeholder="Jelaskan detail promo..."
+                      value={form.deskripsi}
                       onChange={handleChange}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 sm:px-4 sm:py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                      className="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all resize-none"
                       rows="3"
                     ></textarea>
                   </div>
 
-                  {/* Harga */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Tipe Promo & Nilai */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5 p-4 bg-blue-50/50 rounded-xl border border-blue-100">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Harga Asli
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                        Tipe Promo
                       </label>
-                      <input
-                        type="number"
-                        name="harga_asli"
-                        placeholder="Harga Asli"
-                        value={form.harga_asli}
+                      <select
+                        name="tipe_promo"
+                        value={form.tipe_promo}
                         onChange={handleChange}
-                        required
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 sm:px-4 sm:py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                      />
+                        className="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white"
+                      >
+                        <option value="discount_item">Diskon Harga (Rp)</option>
+                        <option value="bundling">Bundling Layanan</option>
+                      </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Harga Promo
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                        Nilai Diskon (Rp)
                       </label>
                       <input
                         type="number"
-                        name="harga_promo"
-                        placeholder="Harga Promo"
-                        value={form.harga_promo}
+                        name="nilai_diskon"
+                        placeholder="Misal: 50000"
+                        value={form.nilai_diskon}
                         onChange={handleChange}
                         required
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 sm:px-4 sm:py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                        className="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                       />
                     </div>
                   </div>
 
-                  {/* Periode */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Periode & Status */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                         Berlaku Mulai
                       </label>
                       <input
                         type="date"
-                        name="berlaku_mulai"
-                        value={form.berlaku_mulai}
+                        name="tgl_mulai"
+                        value={form.tgl_mulai}
                         onChange={handleChange}
                         required
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 sm:px-4 sm:py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                        className="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                         Berlaku Sampai
                       </label>
                       <input
                         type="date"
-                        name="berlaku_sampai"
-                        value={form.berlaku_sampai}
+                        name="tgl_selesai"
+                        value={form.tgl_selesai}
                         onChange={handleChange}
                         required
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 sm:px-4 sm:py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                        className="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                       />
                     </div>
-                  </div>
-
-                  {/* Gambar */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Gambar Promo
-                    </label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      name="image"
-                      onChange={handleChange}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 sm:px-4 sm:py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                    />
-                  </div>
-
-                  {form.image && (
-                    <div className="flex justify-center">
-                      <img
-                        src={form.image}
-                        alt="Preview"
-                        className="max-h-40 rounded-lg border border-gray-200 object-cover"
-                      />
+                    <div className="flex flex-col justify-center pt-6">
+                      <label className="flex items-center cursor-pointer">
+                        <div className="relative">
+                          <input 
+                            type="checkbox" 
+                            name="aktif" 
+                            className="sr-only" 
+                            checked={form.aktif}
+                            onChange={handleChange}
+                          />
+                          <div className={`block w-14 h-8 rounded-full transition-colors ${form.aktif ? 'bg-blue-500' : 'bg-gray-300'}`}></div>
+                          <div className={`dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform ${form.aktif ? 'transform translate-x-6' : ''}`}></div>
+                        </div>
+                        <div className="ml-3 font-semibold text-gray-700">
+                          {form.aktif ? 'Promo Aktif' : 'Non-Aktif'}
+                        </div>
+                      </label>
                     </div>
-                  )}
+                  </div>
 
                   {/* Tombol */}
-                  <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
+                  <div className="flex justify-end gap-3 pt-6 border-t border-gray-100">
                     <button
                       type="button"
                       onClick={() => setIsFormOpen(false)}
-                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                      className="px-5 py-2.5 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl font-medium transition-colors"
                     >
                       Batal
                     </button>
                     <button
                       type="submit"
-                      className={`px-4 py-2 rounded-lg text-white transition-colors shadow-md hover:shadow-lg ${
+                      className={`px-6 py-2.5 rounded-xl font-semibold text-white transition-all shadow-md ${
                         form.nama &&
                         form.kode_promo &&
-                        form.harga_asli &&
-                        form.harga_promo &&
-                        form.berlaku_mulai &&
-                        form.berlaku_sampai
-                          ? "bg-blue-600 hover:bg-blue-700"
-                          : "bg-gray-300 cursor-not-allowed"
+                        form.nilai_diskon !== "" &&
+                        form.tgl_mulai &&
+                        form.tgl_selesai
+                          ? "bg-blue-600 hover:bg-blue-700 hover:shadow-lg"
+                          : "bg-blue-300 cursor-not-allowed"
                       }`}
                       disabled={
                         !(
                           form.nama &&
                           form.kode_promo &&
-                          form.harga_asli &&
-                          form.harga_promo &&
-                          form.berlaku_mulai &&
-                          form.berlaku_sampai
+                          form.nilai_diskon !== "" &&
+                          form.tgl_mulai &&
+                          form.tgl_selesai
                         )
                       }
                     >
@@ -402,80 +400,114 @@ const ManajemenPromo = () => {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden"
+          className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden"
         >
           {isLoading ? (
-            <div className="p-8 text-center">
-              <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
-              <p className="mt-3 text-gray-600 text-sm sm:text-base">
-                Memuat data promo...
-              </p>
+            <div className="p-12 text-center flex flex-col items-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
+              <p className="mt-4 font-medium text-gray-600">Memuat data promo...</p>
             </div>
           ) : promos.length === 0 ? (
-            <div className="p-6 text-center text-gray-500 text-sm sm:text-base">
-              Tidak ada data promo
+            <div className="p-12 text-center flex flex-col items-center">
+              <div className="bg-gray-100 p-4 rounded-full mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-bold text-gray-900">Belum ada promo</h3>
+              <p className="text-gray-500 mt-1 max-w-sm">Anda belum menambahkan data promo satupun. Silakan klik tombol Tambah Promo.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 text-xs sm:text-sm">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50/50">
                   <tr>
                     {[
                       "Kode",
-                      "Nama",
-                      "Deskripsi",
-                      "Harga",
+                      "Nama & Deskripsi",
+                      "Nilai Diskon",
                       "Periode",
+                      "Status",
                       "Aksi",
                     ].map((header) => (
                       <th
                         key={header}
-                        className="px-4 sm:px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider"
+                        className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider"
                       >
                         {header}
                       </th>
                     ))}
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white divide-y divide-gray-100">
                   {promos.map((promo) => (
-                    <tr key={promo.id} className="hover:bg-gray-50">
-                      <td className="px-4 sm:px-6 py-3 whitespace-nowrap">
-                        {promo.kode_promo}
+                    <motion.tr 
+                      key={promo.id} 
+                      className="hover:bg-blue-50/30 transition-colors group"
+                      whileHover={{ backgroundColor: "rgba(239, 246, 255, 0.4)" }}
+                    >
+                      <td className="px-6 py-5 whitespace-nowrap">
+                        <span className="font-mono font-bold text-gray-800 bg-gray-100 px-2 py-1 rounded-md text-sm border border-gray-200">
+                          {promo.kode_promo}
+                        </span>
                       </td>
-                      <td className="px-4 sm:px-6 py-3">{promo.nama}</td>
-                      <td className="px-4 sm:px-6 py-3 text-gray-500 max-w-[200px] truncate">
-                        {promo.description}
-                      </td>
-                      <td className="px-4 sm:px-6 py-3 whitespace-nowrap">
-                        <div className="line-through text-gray-500 text-xs sm:text-sm">
-                          {formatPrice(promo.harga_asli)}
+                      <td className="px-6 py-5">
+                        <div className="font-bold text-gray-900">{promo.nama}</div>
+                        <div className="text-sm text-gray-500 mt-0.5 line-clamp-1 max-w-xs" title={promo.deskripsi}>
+                          {promo.deskripsi || '-'}
                         </div>
-                        <div className="text-red-600 font-semibold text-xs sm:text-sm">
-                          {formatPrice(promo.harga_promo)}
+                      </td>
+                      <td className="px-6 py-5 whitespace-nowrap">
+                        <div className="flex flex-col gap-1">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 self-start">
+                            {promo.tipe_promo === 'discount_item' ? 'Diskon' : 'Bundling'}
+                          </span>
+                          <span className="font-bold text-green-600">
+                            {formatPrice(promo.nilai_diskon)}
+                          </span>
                         </div>
                       </td>
-                      <td className="px-4 sm:px-6 py-3 whitespace-nowrap text-gray-500">
-                        {formatDate(promo.berlaku_mulai)} -{" "}
-                        {formatDate(promo.berlaku_sampai)}
+                      <td className="px-6 py-5 whitespace-nowrap">
+                        <div className="text-sm text-gray-900 font-medium">
+                          {formatDate(promo.tgl_mulai)}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-0.5">
+                          s/d {formatDate(promo.tgl_selesai)}
+                        </div>
                       </td>
-                      <td className="px-4 sm:px-6 py-3 whitespace-nowrap">
-                        <div className="flex gap-2 sm:gap-4">
+                      <td className="px-6 py-5 whitespace-nowrap">
+                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
+                          promo.aktif 
+                            ? "bg-green-100 text-green-700" 
+                            : "bg-gray-100 text-gray-600"
+                        }`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${promo.aktif ? "bg-green-600" : "bg-gray-400"}`}></span>
+                          {promo.aktif ? "Aktif" : "Non-Aktif"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-5 whitespace-nowrap">
+                        <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
                             onClick={() => openEditForm(promo)}
-                            className="text-blue-600 hover:text-blue-900 text-xs sm:text-sm"
+                            className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors tooltip"
+                            title="Edit"
                           >
-                            Edit
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
                           </button>
                           <button
                             onClick={() => handleDelete(promo.id)}
-                            className="text-red-600 hover:text-red-900 text-xs sm:text-sm"
+                            className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors tooltip"
+                            title="Hapus"
                           >
-                            Hapus
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
                           </button>
                         </div>
                       </td>
-                    </tr>
+                    </motion.tr>
                   ))}
                 </tbody>
               </table>

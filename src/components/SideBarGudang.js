@@ -29,7 +29,7 @@ const SidebarGudang = () => {
   }, []);
 
   const menuItems = [
-    { path: "/dashboardgudang", name: "Dashboard", icon: <FiHome className="text-lg" />, key: "dashboard" },
+    { path: "/gudang/dashboardgudang", name: "Dashboard", icon: <FiHome className="text-lg" />, key: "dashboard" },
     { path: "/gudang/masuk", name: "Stok Masuk", icon: <FiArrowDownCircle className="text-lg" />, key: "masuk" },
     { path: "/gudang/keluar", name: "Stok Keluar", icon: <FiArrowUpCircle className="text-lg" />, key: "keluar" }
   ];
@@ -92,8 +92,8 @@ const SidebarGudang = () => {
                 <FiUser className="text-white" />
               </div>
               <div className="flex flex-col text-sm">
-                <p className="font-medium">{currentUser?.name || "Staff Gudang"}</p>
-                <p className="text-xs text-white text-opacity-70">{currentUser?.email || "gudang@example.com"}</p>
+                <p className="font-medium truncate max-w-[150px]">{currentUser?.nama_lengkap || "Staff Gudang"}</p>
+                <p className="text-xs text-blue-200 uppercase tracking-wider font-semibold mt-0.5">{currentUser?.role || "Gudang"}</p>
               </div>
             </div>
             <button

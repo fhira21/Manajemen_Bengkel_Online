@@ -2,36 +2,33 @@ import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import SidebarAdmin from "../../components/SidebarAdmin";
 import { supabase } from "../../lib/supabaseClient";
+import Skeleton from "../../components/ui/skeleton";
+import { FiSearch, FiEdit2, FiTrash2, FiPlus, FiAlertTriangle, FiCheckCircle, FiXCircle, FiBox } from "react-icons/fi";
 
 const ManajemenSparepart = () => {
   const [spareparts, setSpareparts] = useState([]);
-  const [sortFilter, setSortFilter] = useState("");
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("semua");
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const [formData, setFormData] = useState({
+    kode_part: "",
     nama: "",
     harga: "",
-    stok: "",
-    deskripsi: "",
+    stok_minimum: 5,
   });
 
-  // ✅ Ambil data sparepart dari VIEW supaya stok-nya up to date
   const fetchSpareparts = async () => {
     setIsLoading(true);
-    let query = supabase.from("spareparts_with_stok").select("*");
+    const { data, error } = await supabase
+      .from("spareparts_with_stock")
+      .select("*")
+      .order("kode_part", { ascending: true });
 
-    if (sortFilter === "termurah") {
-      query = query.order("harga", { ascending: true });
-    } else if (sortFilter === "termahal") {
-      query = query.order("harga", { ascending: false });
-    }
-
-    const { data, error } = await query;
     if (!error) {
-      setSpareparts(data);
+      setSpareparts(data || []);
     } else {
       console.error("Gagal mengambil data:", error.message);
     }
@@ -40,20 +37,20 @@ const ManajemenSparepart = () => {
 
   useEffect(() => {
     fetchSpareparts();
-  }, [sortFilter]);
+  }, []);
 
   const openModal = (item = null) => {
     if (item) {
       setEditing(item);
       setFormData({
-        nama: item.nama,
-        harga: item.harga,
-        stok: item.stok, // stok dari view
-        deskripsi: item.deskripsi || "",
+        kode_part: item.kode_part || "",
+        nama: item.nama || "",
+        harga: item.harga || "",
+        stok_minimum: item.stok_minimum || 5,
       });
     } else {
       setEditing(null);
-      setFormData({ nama: "", harga: "", stok: "", deskripsi: "" });
+      setFormData({ kode_part: "", nama: "", harga: "", stok_minimum: 5 });
     }
     setShowModal(true);
   };
@@ -61,34 +58,34 @@ const ManajemenSparepart = () => {
   const closeModal = () => {
     setShowModal(false);
     setEditing(null);
-    setFormData({ nama: "", harga: "", stok: "", deskripsi: "" });
+    setFormData({ kode_part: "", nama: "", harga: "", stok_minimum: 5 });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // stok tidak disimpan ke tabel spareparts (karena dihitung otomatis di view)
     const payload = {
+      kode_part: formData.kode_part,
       nama: formData.nama,
       harga: Number(formData.harga),
-      deskripsi: formData.deskripsi,
+      stok_minimum: Number(formData.stok_minimum),
     };
 
-    if (editing) {
-      const { error } = await supabase
-        .from("spareparts")
-        .update(payload)
-        .eq("id", editing.id);
-      if (!error) {
-        fetchSpareparts();
-        closeModal();
-      } else alert("Gagal memperbarui: " + error.message);
-    } else {
-      const { error } = await supabase.from("spareparts").insert([payload]);
-      if (!error) {
-        fetchSpareparts();
-        closeModal();
-      } else alert("Gagal menambah: " + error.message);
+    try {
+      if (editing) {
+        const { error } = await supabase
+          .from("spareparts")
+          .update(payload)
+          .eq("id", editing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("spareparts").insert([payload]);
+        if (error) throw error;
+      }
+      fetchSpareparts();
+      closeModal();
+    } catch (err) {
+      alert("Gagal menyimpan data: " + err.message);
     }
   };
 
@@ -97,209 +94,348 @@ const ManajemenSparepart = () => {
     const konfirmasi = window.confirm("Yakin ingin menghapus sparepart ini?");
     if (!konfirmasi) return;
 
-    const { error } = await supabase.from("spareparts").delete().eq("id", id);
-    if (!error) setSpareparts((prev) => prev.filter((s) => s.id !== id));
-    else alert("Gagal menghapus: " + error.message);
+    try {
+      const { error } = await supabase.from("spareparts").delete().eq("id", id);
+      if (error) throw error;
+      setSpareparts((prev) => prev.filter((s) => s.id !== id));
+    } catch (err) {
+      alert("Gagal menghapus: " + err.message);
+    }
   };
 
-  const filteredData = spareparts.filter(
-    (item) =>
-      item.nama?.toLowerCase().includes(search.toLowerCase()) ||
-      item.deskripsi?.toLowerCase().includes(search.toLowerCase())
-  );
+  const getStatus = (current_stock, stok_minimum) => {
+    if (current_stock === 0) return "habis";
+    if (current_stock <= stok_minimum) return "menipis";
+    return "aman";
+  };
+
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case "habis":
+        return <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800"><FiXCircle /> Habis</span>;
+      case "menipis":
+        return <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800"><FiAlertTriangle /> Menipis</span>;
+      case "aman":
+        return <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800"><FiCheckCircle /> Aman</span>;
+      default:
+        return null;
+    }
+  };
+
+  const filteredData = spareparts.filter((item) => {
+    const term = search.toLowerCase();
+    const matchesSearch = 
+      item.nama?.toLowerCase().includes(term) ||
+      item.kode_part?.toLowerCase().includes(term);
+
+    const status = getStatus(item.current_stock || 0, item.stok_minimum || 0);
+    const matchesStatus = statusFilter === "semua" || status === statusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat("id-ID", {
       style: "currency",
       currency: "IDR",
       minimumFractionDigits: 0,
-    }).format(price);
+    }).format(price || 0);
   };
 
-  const getStockColor = (stok) => {
-    if (stok <= 0) return "bg-red-100 text-red-800";
-    if (stok <= 5) return "bg-yellow-100 text-yellow-800";
-    return "bg-green-100 text-green-800";
-  };
+  // KPI Calculations
+  const totalSpareparts = spareparts.length;
+  const totalStock = spareparts.reduce((sum, item) => sum + (item.current_stock || 0), 0);
+  const lowStockCount = spareparts.filter(i => (i.current_stock || 0) > 0 && (i.current_stock || 0) <= (i.stok_minimum || 0)).length;
+  const outOfStockCount = spareparts.filter(i => (i.current_stock || 0) === 0).length;
 
   return (
-    <div className="flex">
+    <div className="flex bg-gray-50 min-h-screen">
       <SidebarAdmin />
-      <main className="flex-1 md:ml-64 p-4">
+      <main className="flex-1 md:ml-64 p-4 sm:p-6 lg:p-8 w-full">
         <div className="max-w-full mx-auto">
-          {/* Header Section */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Manajemen Sparepart</h1>
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">Manajemen Sparepart</h1>
+              <p className="text-gray-500 mt-1 text-sm">Kelola master data dan pantau ketersediaan suku cadang.</p>
+            </div>
             <button
               onClick={() => openModal()}
-              className="px-5 py-3 bg-blue-600 text-white rounded hover:bg-blue-700 text-l flex items-center gap-1"
+              className="px-5 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-md font-semibold flex items-center justify-center gap-2"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
-              </svg>
+              <FiPlus className="text-lg" />
               Tambah Sparepart
             </button>
           </div>
 
-          {/* Filter Section */}
-          <div className="bg-white p-3 rounded-md shadow-xs border border-gray-200 mb-4">
-            <div className="flex flex-col md:flex-row md:items-center gap-3">
-              <div className="flex-1">
-                <div className="relative">
+          {/* KPI Cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2.5 bg-blue-50 text-blue-600 rounded-lg"><FiBox className="text-xl" /></div>
+                <h2 className="text-gray-600 text-sm font-semibold">Total Item</h2>
+              </div>
+              <p className="text-3xl font-black text-gray-900">{totalSpareparts}</p>
+            </motion.div>
+
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2.5 bg-green-50 text-green-600 rounded-lg"><FiCheckCircle className="text-xl" /></div>
+                <h2 className="text-gray-600 text-sm font-semibold">Total Stok (pcs)</h2>
+              </div>
+              <p className="text-3xl font-black text-gray-900">{totalStock}</p>
+            </motion.div>
+
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2.5 bg-yellow-50 text-yellow-600 rounded-lg"><FiAlertTriangle className="text-xl" /></div>
+                <h2 className="text-gray-600 text-sm font-semibold">Stok Menipis</h2>
+              </div>
+              <p className="text-3xl font-black text-yellow-600">{lowStockCount}</p>
+            </motion.div>
+
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2.5 bg-red-50 text-red-600 rounded-lg"><FiXCircle className="text-xl" /></div>
+                <h2 className="text-gray-600 text-sm font-semibold">Stok Habis</h2>
+              </div>
+              <p className="text-3xl font-black text-red-600">{outOfStockCount}</p>
+            </motion.div>
+          </div>
+
+          {/* Table Container */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            {/* Controls */}
+            <div className="p-5 border-b border-gray-100 bg-white">
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="relative flex-1">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
+                    <FiSearch className="text-gray-400" />
                   </div>
                   <input
                     type="text"
-                    placeholder="Cari sparepart..."
-                    className="w-full border border-gray-300 rounded pl-9 pr-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    placeholder="Cari kode atau nama sparepart..."
+                    className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm transition-all"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                   />
                 </div>
-              </div>
-              <div className="w-full md:w-40">
-                <select
-                  value={sortFilter}
-                  onChange={(e) => setSortFilter(e.target.value)}
-                  className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                >
-                  <option value="">Semua</option>
-                  <option value="termurah">Termurah</option>
-                  <option value="termahal">Termahal</option>
-                </select>
+                <div className="w-full md:w-64">
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 hover:bg-white transition-colors"
+                  >
+                    <option value="semua">Semua Status Stok</option>
+                    <option value="aman">Stok Aman</option>
+                    <option value="menipis">Stok Menipis</option>
+                    <option value="habis">Stok Habis</option>
+                  </select>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Table Section */}
-          <div className="bg-white border border-gray-200 rounded-md shadow-xs overflow-hidden">
-            {isLoading ? (
-              <div className="p-4 text-center text-sm text-gray-500">
-                Memuat data sparepart...
-              </div>
-            ) : filteredData.length === 0 ? (
-              <div className="p-4 text-center text-sm text-gray-500">
-                Tidak ada data sparepart ditemukan
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200 text-sm">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-4 py-4 text-left font-medium text-gray-700">No</th>
-                      <th className="px-4 py-4 text-left font-medium text-gray-700">Nama Sparepart</th>
-                      <th className="px-4 py-4 text-left font-medium text-gray-700">Deskripsi</th>
-                      <th className="px-4 py-4 text-left font-medium text-gray-700">Harga</th>
-                      <th className="px-4 py-4 text-left font-medium text-gray-700">Sisa Stok</th>
-                      <th className="px-4 py-4 text-left font-medium text-gray-700">Aksi</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredData.map((item, index) => (
-                      <tr key={item.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">{index + 1}</td>
-                        <td className="px-6 py-4 whitespace-nowrap font-medium">{item.nama}</td>
-                        <td className="px-6 py-4 max-w-xs truncate">{item.deskripsi || '-'}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">{formatPrice(item.harga)}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 py-1 rounded-full text-xs ${getStockColor(item.stok)}`}>
-                            {item.stok} pcs
-                          </span>
-                        </td>
-                        <td className="px-4 py-2 whitespace-nowrap">
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => openModal(item)}
-                              className="text-blue-600 hover:text-blue-800 text-sm flex items-center gap-1"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                              </svg>
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => handleDelete(item.id)}
-                              className="text-red-600 hover:text-red-800 text-sm flex items-center gap-1"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                              Hapus
-                            </button>
-                          </div>
-                        </td>
+            {/* Desktop Table */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50/50">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Kode</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Nama Sparepart</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Harga Satuan</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Stok Saat Ini</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Batas Min</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Status</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-100">
+                  {isLoading ? (
+                    [...Array(4)].map((_, i) => (
+                      <tr key={i}>
+                        <td colSpan={7} className="px-6 py-4"><Skeleton className="h-6 w-full" /></td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+                    ))
+                  ) : filteredData.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
+                        Tidak ada sparepart yang sesuai pencarian.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredData.map((item) => {
+                      const current = item.current_stock || 0;
+                      const min = item.stok_minimum || 0;
+                      const status = getStatus(current, min);
+
+                      return (
+                        <tr key={item.id} className="hover:bg-blue-50/50 transition-colors">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="font-mono text-xs font-bold bg-gray-100 text-gray-800 px-2 py-1 rounded border border-gray-200">
+                              {item.kode_part}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 font-bold text-gray-900">{item.nama}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-gray-700 font-medium">{formatPrice(item.harga)}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="text-lg font-black text-gray-900">{current}</span>
+                            <span className="text-xs text-gray-500 ml-1">pcs</span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-gray-500">{min}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(status)}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex gap-2">
+                              <button onClick={() => openModal(item)} className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors tooltip" title="Edit">
+                                <FiEdit2 />
+                              </button>
+                              <button onClick={() => handleDelete(item.id)} className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors tooltip" title="Hapus">
+                                <FiTrash2 />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Card Layout */}
+            <div className="md:hidden flex flex-col divide-y divide-gray-100">
+              {isLoading ? (
+                [...Array(3)].map((_, i) => (
+                  <div key={i} className="p-4"><Skeleton className="h-20 w-full" /></div>
+                ))
+              ) : filteredData.length === 0 ? (
+                <div className="p-8 text-center text-gray-500">Tidak ada sparepart.</div>
+              ) : (
+                filteredData.map((item) => {
+                  const current = item.current_stock || 0;
+                  const min = item.stok_minimum || 0;
+                  const status = getStatus(current, min);
+
+                  return (
+                    <div key={item.id} className="p-4 hover:bg-gray-50 transition-colors">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <span className="font-mono text-xs font-bold bg-gray-100 text-gray-800 px-1.5 py-0.5 rounded border border-gray-200 block w-max mb-1">
+                            {item.kode_part}
+                          </span>
+                          <h3 className="font-bold text-gray-900">{item.nama}</h3>
+                        </div>
+                        {getStatusBadge(status)}
+                      </div>
+                      
+                      <div className="flex justify-between items-center bg-gray-50 p-3 rounded-xl border border-gray-100 mb-3 mt-2">
+                        <div>
+                          <p className="text-xs text-gray-500">Harga Satuan</p>
+                          <p className="font-bold text-gray-800 text-sm">{formatPrice(item.harga)}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs text-gray-500">Sisa Stok</p>
+                          <p className="font-black text-gray-900 text-lg">{current} <span className="text-xs font-normal">pcs</span></p>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2">
+                        <button onClick={() => openModal(item)} className="flex-1 flex items-center justify-center gap-1 py-2 text-sm font-semibold text-blue-600 bg-blue-50 rounded-lg">
+                          <FiEdit2 /> Edit
+                        </button>
+                        <button onClick={() => handleDelete(item.id)} className="flex items-center justify-center px-4 text-sm font-semibold text-red-600 bg-red-50 rounded-lg">
+                          <FiTrash2 />
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Modal Form */}
+        {/* Form Modal */}
         <AnimatePresence>
           {showModal && (
-            <div className="fixed inset-0 z-50 bg-black bg-opacity-40 flex justify-center items-center p-4">
-              <div className="bg-white rounded-md shadow-lg w-full max-w-md">
-                <div className="p-4 border-b border-gray-200">
-                  <h2 className="text-lg font-semibold text-gray-800">
-                    {editing ? "Edit Sparepart" : "Tambah Sparepart"}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex justify-center items-center p-4 py-10 overflow-auto"
+            >
+              <motion.div
+                initial={{ scale: 0.95, y: 20, opacity: 0 }}
+                animate={{ scale: 1, y: 0, opacity: 1 }}
+                exit={{ scale: 0.95, y: 20, opacity: 0 }}
+                className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden"
+              >
+                <div className="p-5 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+                  <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <span className="bg-blue-100 text-blue-600 p-1.5 rounded-lg"><FiBox /></span>
+                    {editing ? "Edit Sparepart" : "Tambah Sparepart Baru"}
                   </h2>
+                  <button onClick={closeModal} className="text-gray-400 hover:text-gray-600 p-2"><FiXCircle className="text-xl" /></button>
                 </div>
-                <form onSubmit={handleSubmit} className="p-4 space-y-3">
+                
+                <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="col-span-2 sm:col-span-1">
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Kode Part</label>
+                      <input
+                        type="text"
+                        placeholder="Cth: SP-001"
+                        value={formData.kode_part}
+                        onChange={(e) => setFormData({ ...formData, kode_part: e.target.value })}
+                        required
+                        className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div className="col-span-2 sm:col-span-1">
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Batas Minimal Stok</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={formData.stok_minimum}
+                        onChange={(e) => setFormData({ ...formData, stok_minimum: e.target.value })}
+                        required
+                        className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+                  
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Nama</label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nama Sparepart</label>
                     <input
                       type="text"
-                      placeholder="Nama sparepart"
+                      placeholder="Cth: Filter Oli"
                       value={formData.nama}
                       onChange={(e) => setFormData({ ...formData, nama: e.target.value })}
                       required
-                      className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
+                  
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Harga</label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Harga (Rp)</label>
                     <input
                       type="number"
-                      placeholder="Harga"
+                      placeholder="Cth: 150000"
                       value={formData.harga}
                       onChange={(e) => setFormData({ ...formData, harga: e.target.value })}
                       required
-                      className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Deskripsi</label>
-                    <textarea
-                      placeholder="Deskripsi sparepart"
-                      value={formData.deskripsi}
-                      onChange={(e) => setFormData({ ...formData, deskripsi: e.target.value })}
-                      className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 min-h-[80px]"
-                    />
-                  </div>
-                  <div className="flex justify-end gap-2 pt-4">
-                    <button
-                      type="button"
-                      onClick={closeModal}
-                      className="px-3 py-1.5 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 text-sm"
-                    >
-                      Batal
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
-                    >
-                      {editing ? "Simpan" : "Tambah"}
+
+                  <div className="flex justify-end gap-3 pt-6 mt-6 border-t border-gray-100">
+                    <button type="button" onClick={closeModal} className="px-5 py-2.5 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl font-medium transition-colors">Batal</button>
+                    <button type="submit" className="px-6 py-2.5 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 shadow-md transition-colors">
+                      {editing ? "Simpan Perubahan" : "Simpan Sparepart"}
                     </button>
                   </div>
                 </form>
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
           )}
         </AnimatePresence>
       </main>

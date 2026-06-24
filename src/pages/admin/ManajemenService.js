@@ -13,6 +13,7 @@ const ManajemenService = () => {
     nama: "",
     deskripsi: "",
     harga: "",
+    estimasi_menit: "",
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -48,6 +49,7 @@ const ManajemenService = () => {
           nama: formData.nama,
           deskripsi: formData.deskripsi,
           harga: Number(formData.harga),
+          estimasi_menit: Number(formData.estimasi_menit),
         })
         .eq("id", editingService.id);
 
@@ -63,6 +65,7 @@ const ManajemenService = () => {
           nama: formData.nama,
           deskripsi: formData.deskripsi,
           harga: Number(formData.harga),
+          estimasi_menit: Number(formData.estimasi_menit),
         },
       ]);
       if (error) {
@@ -75,7 +78,7 @@ const ManajemenService = () => {
   };
 
   const resetForm = () => {
-    setFormData({ nama: "", deskripsi: "", harga: "" });
+    setFormData({ nama: "", deskripsi: "", harga: "", estimasi_menit: "" });
     setEditingService(null);
     setShowModal(false);
   };
@@ -85,6 +88,7 @@ const ManajemenService = () => {
       nama: service.nama,
       deskripsi: service.deskripsi,
       harga: service.harga,
+      estimasi_menit: service.estimasi_menit,
     });
     setEditingService(service);
     setShowModal(true);
@@ -274,7 +278,7 @@ const ManajemenService = () => {
                 <table className="min-w-full divide-y divide-gray-200 text-sm">
                   <thead className="bg-gray-50">
                     <tr>
-                      {["No", "Nama", "Deskripsi", "Harga", "Aksi"].map(
+                      {["No", "Nama", "Deskripsi", "Harga", "Estimasi (Mnt)", "Aksi"].map(
                         (header, index) => (
                           <motion.th
                             key={header}
@@ -319,6 +323,9 @@ const ManajemenService = () => {
                         <td className="px-6 py-4 max-w-xs truncate">{service.deskripsi || '-'}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-blue-600">
                           {formatPrice(service.harga)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {service.estimasi_menit ? `${service.estimasi_menit} mnt` : '-'}
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap">
                           <div className="flex gap-2">
@@ -412,6 +419,17 @@ const ManajemenService = () => {
                       placeholder="Harga"
                       value={formData.harga}
                       onChange={(e) => setFormData({ ...formData, harga: e.target.value })}
+                      required
+                      className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Estimasi Waktu (Menit)</label>
+                    <input
+                      type="number"
+                      placeholder="Contoh: 60"
+                      value={formData.estimasi_menit}
+                      onChange={(e) => setFormData({ ...formData, estimasi_menit: e.target.value })}
                       required
                       className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
