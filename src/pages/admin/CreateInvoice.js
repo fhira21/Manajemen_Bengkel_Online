@@ -3,16 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabaseClient";
 import Sidebar from "../../components/SidebarAdmin";
 import {
-  FiFileText,
-  FiMessageCircle,
-  FiInfo,
-  FiTool,
-  FiBox,
-  FiPlus,
-  FiTrash2,
-  FiTag,
-  FiCheckCircle,
-  FiX
+  FiFileText, FiPrinter, FiMessageCircle, FiUser, FiCalendar, FiPhone, FiInfo,
+  FiTool, FiBox, FiPlus, FiTrash2, FiTag, FiCheckCircle, FiX
 } from "react-icons/fi";
 import { FaCar } from "react-icons/fa";
 import Select from "react-select";
@@ -250,7 +242,7 @@ export default function CreateInvoice() {
         `INV-${dateStr}-${seq.toString().padStart(4, "0")}`;
 
       // Insert Invoice
-
+      
       const { data: invData, error: invError } = await supabase
         .from("invoices")
         .insert([{
