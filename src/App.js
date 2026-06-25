@@ -9,8 +9,8 @@ import ManajemenPelanggan from './pages/admin/ManajemenPelanggan';
 import ManajemenKaryawan from './pages/admin/ManajemenMechanic';
 import ManajemenSparepart from './pages/admin/ManajemenSparepart';
 import ManajemenPromo from './pages/admin/ManajemenPromo';
-import NotaBooking from './pages/admin/NotaBooking';
 import CreateInvoice from './pages/admin/CreateInvoice';
+import ENota from './pages/ENota';
 
 // dashboard montir
 import DashboardMontir from './pages/montir/DashboardMontir';
@@ -31,6 +31,7 @@ function MainLayout() {
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/e-nota/:token" element={<ENota />} />
 
 
       <Route path="/admin/dashboardadmin" element={<DashboardAdmin />} />
@@ -39,7 +40,6 @@ function MainLayout() {
       <Route path="/admin/karyawan" element={<ManajemenKaryawan />} />
       <Route path="/admin/sparepart" element={<ManajemenSparepart />} />
       <Route path="/admin/promo" element={<ManajemenPromo />} />
-      <Route path="/admin/nota/:id" element={<NotaBooking />} />
       <Route path="/admin/create-invoice/:bookingId" element={<CreateInvoice />} />
 
       <Route path="/montir/dashboardmontir" element={<DashboardMontir />} />
