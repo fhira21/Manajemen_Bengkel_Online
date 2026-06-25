@@ -2,7 +2,6 @@ import React, { useEffect, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import { FiCheckCircle } from "react-icons/fi";
-import { useReactToPrint } from "react-to-print";
 
 export default function ENota() {
   const { token } = useParams();

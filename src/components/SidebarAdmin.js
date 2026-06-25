@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { FiHome, FiUsers, FiTag, FiPackage, FiTool, FiUser, FiLogOut, FiMenu, FiX, FiCheck, FiShield } from "react-icons/fi";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
 const SidebarAdmin = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
