@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabaseClient";
 import SidebarMontir from "../../components/SidebarMontir";
-import { FiArrowLeft, FiSave, FiUser, FiPhone, FiCalendar, FiTool, FiBox, FiPlus, FiTrash2 } from "react-icons/fi";
+import { FiArrowLeft, FiSave, FiUser, FiPhone, FiCalendar, FiTool, FiBox, FiPlus } from "react-icons/fi";
 import { FaCar } from "react-icons/fa";
 
 export default function ServiceReport() {
@@ -57,7 +57,7 @@ export default function ServiceReport() {
       setBooking(bookingData);
 
       // 2. Fetch Existing Service Report (if any)
-      const { data: reportData, error: reportError } = await supabase
+      const { data: reportData } = await supabase
         .from("service_reports")
         .select("*")
         .eq("booking_id", bookingId)

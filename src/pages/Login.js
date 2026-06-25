@@ -13,13 +13,7 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    setIsMounted(true);
-    return () => setIsMounted(false);
-  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

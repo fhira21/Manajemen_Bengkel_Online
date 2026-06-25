@@ -2,8 +2,7 @@ import React, { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import SidebarGudang from "../../components/SideBarGudang";
 import {
-  FiSearch, FiCalendar, FiPlus, FiPackage,
-  FiUser, FiInfo, FiFilter, FiTrash2, FiEdit2
+  FiSearch, FiCalendar, FiPlus, FiPackage, FiUser
 } from "react-icons/fi";
 import { motion } from "framer-motion";
 

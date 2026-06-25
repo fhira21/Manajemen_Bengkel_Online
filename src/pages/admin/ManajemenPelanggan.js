@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import SidebarAdmin from "../../components/SidebarAdmin";
 import { supabase } from "../../lib/supabaseClient";
-import { FiSearch, FiMessageSquare, FiCalendar, FiUser, FiPhone } from "react-icons/fi";
+import { FiSearch, FiMessageSquare } from "react-icons/fi";
 import { FaCar } from "react-icons/fa";
 
 const ManajemenPelanggan = () => {

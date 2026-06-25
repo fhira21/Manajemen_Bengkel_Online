@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../../lib/supabaseClient";
 import SidebarAdmin from "../../components/SidebarAdmin";
 import Skeleton from "../../components/ui/skeleton";
-import { FiSearch, FiFilter, FiChevronDown, FiChevronUp, FiClock, FiX, FiPhone, FiCalendar, FiUser, FiTool } from "react-icons/fi";
+import { FiSearch, FiFilter, FiChevronDown, FiChevronUp, FiX, FiPhone, FiCalendar, FiTool } from "react-icons/fi";
 import { FaCar } from "react-icons/fa";
 
 export default function DashboardAdmin() {

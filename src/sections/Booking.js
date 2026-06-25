@@ -78,7 +78,7 @@ const Booking = () => {
     try {
       // 1. Resolve Customer
       let customerId;
-      const { data: existingCustomer, error: cError } = await supabase
+      const { data: existingCustomer } = await supabase
         .from("customers")
         .select("id")
         .eq("no_telepon", noTelepon)
@@ -99,7 +99,7 @@ const Booking = () => {
       // 2. Resolve Vehicle
       let vehicleId;
       const normalizedPlate = platNo.replace(/\s+/g, "").toUpperCase();
-      const { data: existingVehicle, error: vError } = await supabase
+      const { data: existingVehicle} = await supabase
         .from("vehicles")
         .select("id")
         .eq("plat_nomor", normalizedPlate)
