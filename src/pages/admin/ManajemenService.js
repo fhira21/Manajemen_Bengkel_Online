@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import SidebarAdmin from "../../components/SidebarAdmin";
 import { supabase } from "../../lib/supabaseClient";
@@ -17,7 +17,7 @@ const ManajemenService = () => {
   });
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchServices = async () => {
+  const fetchServices = useCallback(async () => {
     setIsLoading(true);
     let query = supabase.from("services").select("*");
 
@@ -34,11 +34,11 @@ const ManajemenService = () => {
       setServices(data);
     }
     setIsLoading(false);
-  };
-
-  useEffect(() => {
-    fetchServices();
   }, [sortFilter]);
+
+ useEffect(() => {
+   fetchServices();
+}, [fetchServices]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -152,9 +152,9 @@ const ManajemenService = () => {
             >
               Manajemen Layanan Service
             </motion.h1>
-            
+
             <motion.button
-              whileHover={{ 
+              whileHover={{
                 scale: 1.05,
                 boxShadow: "0 5px 15px rgba(37, 99, 235, 0.3)"
               }}
@@ -224,18 +224,18 @@ const ManajemenService = () => {
                 className="p-4 text-center"
               >
                 <motion.div
-                  animate={{ 
+                  animate={{
                     rotate: 360,
                     scale: [1, 1.2, 1]
                   }}
-                  transition={{ 
-                    repeat: Infinity, 
-                    duration: 1.5, 
+                  transition={{
+                    repeat: Infinity,
+                    duration: 1.5,
                     ease: "easeInOut"
                   }}
                   className="rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"
                 ></motion.div>
-                <motion.p 
+                <motion.p
                   animate={{
                     opacity: [0.5, 1, 0.5],
                   }}
@@ -284,7 +284,7 @@ const ManajemenService = () => {
                             key={header}
                             initial={{ opacity: 0, y: -10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ 
+                            transition={{
                               delay: 0.1 * index,
                               type: "spring",
                               stiffness: 200
@@ -302,16 +302,16 @@ const ManajemenService = () => {
                       <motion.tr
                         key={service.id}
                         initial={{ opacity: 0, y: 10 }}
-                        animate={{ 
-                          opacity: 1, 
+                        animate={{
+                          opacity: 1,
                           y: 0,
-                          transition: { 
+                          transition: {
                             delay: index * 0.03,
                             type: "spring",
                             stiffness: 200
                           }
                         }}
-                        whileHover={{ 
+                        whileHover={{
                           backgroundColor: "rgba(249, 250, 251, 1)",
                           scale: 1.005,
                           boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
@@ -330,7 +330,7 @@ const ManajemenService = () => {
                         <td className="px-4 py-4 whitespace-nowrap">
                           <div className="flex gap-2">
                             <motion.button
-                              whileHover={{ 
+                              whileHover={{
                                 scale: 1.1,
                                 color: "#2563eb"
                               }}
@@ -344,7 +344,7 @@ const ManajemenService = () => {
                               Edit
                             </motion.button>
                             <motion.button
-                              whileHover={{ 
+                              whileHover={{
                                 scale: 1.1,
                                 color: "#dc2626"
                               }}
@@ -379,7 +379,7 @@ const ManajemenService = () => {
             >
               <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ 
+                animate={{
                   scale: 1,
                   opacity: 1,
                   transition: {
@@ -388,7 +388,7 @@ const ManajemenService = () => {
                     stiffness: 300
                   }
                 }}
-                exit={{ 
+                exit={{
                   scale: 0.9,
                   opacity: 0,
                   transition: { duration: 0.2 }
@@ -447,7 +447,7 @@ const ManajemenService = () => {
                     <motion.button
                       type="button"
                       onClick={resetForm}
-                      whileHover={{ 
+                      whileHover={{
                         scale: 1.05,
                         backgroundColor: "#dc2626"
                       }}
@@ -458,7 +458,7 @@ const ManajemenService = () => {
                     </motion.button>
                     <motion.button
                       type="submit"
-                      whileHover={{ 
+                      whileHover={{
                         scale: 1.05,
                         boxShadow: "0 5px 15px rgba(16, 185, 129, 0.4)"
                       }}

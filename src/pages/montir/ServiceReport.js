@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabaseClient";
 import SidebarMontir from "../../components/SidebarMontir";
@@ -32,13 +32,7 @@ export default function ServiceReport() {
   const [usedServices, setUsedServices] = useState([]);
   const [serviceQty, setServiceQty] = useState(1);
 
-  useEffect(() => {
-    if (bookingId) {
-      fetchData();
-    }
-  }, [bookingId]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       // 1. Fetch Booking Details
@@ -123,7 +117,11 @@ export default function ServiceReport() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [bookingId]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleSave = async () => {
     setSaving(true);

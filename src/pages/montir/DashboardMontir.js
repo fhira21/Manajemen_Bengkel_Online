@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import SidebarMontir from "../../components/SidebarMontir";
 import { supabase } from "../../lib/supabaseClient";
 import {
@@ -34,12 +34,7 @@ const DashboardMontir = () => {
   console.log("Current User:", currentUser);
   console.log("Montir ID:", montirId);
 
-  useEffect(() => {
-    if (!montirId) return;
-    fetchDashboardData();
-  }, [montirId]);
-
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     setLoading(true);
     try {
       // Fetch Summary KPI
@@ -89,7 +84,12 @@ const DashboardMontir = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [montirId]);
+
+  useEffect(() => {
+    if (!montirId) return;
+    fetchDashboardData();
+  }, [montirId, fetchDashboardData]);
 
   const handleUpdate = (booking) => {
     setSelectedBooking(booking);

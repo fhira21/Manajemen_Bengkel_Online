@@ -3,7 +3,6 @@ import { motion } from "framer-motion";
 import SidebarAdmin from "../../components/SidebarAdmin";
 import { supabase } from "../../lib/supabaseClient";
 import { FiSearch, FiMessageSquare } from "react-icons/fi";
-import { FaCar } from "react-icons/fa";
 
 const ManajemenPelanggan = () => {
   const [data, setData] = useState([]);

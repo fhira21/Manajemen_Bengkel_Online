@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import { FiCheckCircle } from "react-icons/fi";
@@ -9,11 +9,8 @@ export default function ENota() {
   const [invoice, setInvoice] = useState(null);
   const printRef = useRef();
 
-  useEffect(() => {
-    fetchInvoice();
-  }, [token]);
 
-  const fetchInvoice = async () => {
+  const fetchInvoice = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from("invoices")
@@ -48,7 +45,11 @@ export default function ENota() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    fetchInvoice();
+  }, [fetchInvoice]);
 
   if (loading) {
     return (

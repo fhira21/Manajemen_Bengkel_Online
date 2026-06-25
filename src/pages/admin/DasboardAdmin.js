@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../../lib/supabaseClient";
 import SidebarAdmin from "../../components/SidebarAdmin";
@@ -21,7 +21,7 @@ export default function DashboardAdmin() {
   });
   const [showFilters, setShowFilters] = useState(false);
 
-  const fetchBookings = async () => {
+  const fetchBookings = useCallback(async () => {
     setLoading(true);
 
     let query = supabase
@@ -45,7 +45,11 @@ export default function DashboardAdmin() {
     }
 
     setLoading(false);
-  };
+  }, [dateFilter]);
+
+  useEffect(() => {
+    fetchBookings();
+  }, [fetchBookings]);
 
   const fetchMontirs = async () => {
     const { data, error } = await supabase
@@ -123,12 +127,14 @@ export default function DashboardAdmin() {
     setStatusFilter("all");
     setSearchTerm("");
   };
-
   useEffect(() => {
     fetchBookings();
-    fetchMontirs();
-  }, [sortConfig, dateFilter]);
+  }, [fetchBookings]);
 
+  useEffect(() => {
+    fetchMontirs();
+  }, []);
+  
   const filteredBookings =
     bookings.filter((booking) => {
       const term =

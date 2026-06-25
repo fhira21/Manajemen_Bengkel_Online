@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabaseClient";
 import Sidebar from "../../components/SidebarAdmin";
@@ -47,11 +47,7 @@ export default function CreateInvoice() {
   const [generatedInvoice, setGeneratedInvoice] = useState(null);
   const iframeRef = useRef(null);
 
-  useEffect(() => {
-    fetchData();
-  }, [bookingId]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       // 1. Booking Info
@@ -140,7 +136,11 @@ export default function CreateInvoice() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [bookingId, dbPromos, selectedPromo]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   // Add Handlers
   const handleAddService = () => {
@@ -241,7 +241,7 @@ export default function CreateInvoice() {
         `INV-${dateStr}-${seq.toString().padStart(4, "0")}`;
 
       // Insert Invoice
-      
+
       const { data: invData, error: invError } = await supabase
         .from("invoices")
         .insert([{

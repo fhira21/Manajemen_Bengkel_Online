@@ -1,15 +1,15 @@
-import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import SidebarMontir from "../../components/SidebarMontir";
 import { FiSearch, FiFilter, FiCalendar } from "react-icons/fi";
 import { FaCar } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import Skeleton from "../../components/ui/skeleton";
+import { useEffect, useState, useCallback } from "react";
 
 export default function RiwayatMontir() {
   const [riwayat, setRiwayat] = useState([]);
   const [loading, setLoading] = useState(true);
-  
+
   // Filters
   const [searchTerm, setSearchTerm] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -20,7 +20,7 @@ export default function RiwayatMontir() {
   const currentUser = JSON.parse(localStorage.getItem("currentUser"));
   const montirId = currentUser?.id;
 
-  const fetchRiwayat = async () => {
+  const fetchRiwayat = useCallback(async () => {
     if (!montirId) return;
     setLoading(true);
 
@@ -43,11 +43,11 @@ export default function RiwayatMontir() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [montirId]);
 
   useEffect(() => {
     fetchRiwayat();
-  }, [montirId]);
+  }, [fetchRiwayat]);
 
   // Apply Client-Side Filters
   const filteredData = riwayat.filter((item) => {
@@ -58,7 +58,7 @@ export default function RiwayatMontir() {
       item.vehicle_name?.toLowerCase().includes(term);
 
     const matchesStatus = statusFilter === "all" || item.status === statusFilter;
-    
+
     const itemDate = item.booking_date ? item.booking_date.split("T")[0] : null;
     const matchesStart = startDate ? itemDate >= startDate : true;
     const matchesEnd = endDate ? itemDate <= endDate : true;
@@ -88,7 +88,7 @@ export default function RiwayatMontir() {
           </p>
         </div>
 
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
@@ -252,7 +252,7 @@ export default function RiwayatMontir() {
                     </div>
                     {getStatusBadge(item.status)}
                   </div>
-                  
+
                   <div className="bg-gray-50 p-3 rounded-xl border border-gray-100 flex flex-col gap-2">
                     <div className="flex justify-between items-center">
                       <p className="font-semibold text-gray-800 flex items-center gap-1.5"><FaCar className="text-gray-400" /> {item.vehicle_name}</p>

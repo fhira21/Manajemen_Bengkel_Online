@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import { motion, AnimatePresence } from "framer-motion";
@@ -47,8 +47,8 @@ const LoginPage = () => {
         localStorage.setItem(
           "currentUser",
           JSON.stringify({
-            id: user.id, 
-            nama_lengkap: user.nama_lengkap, 
+            id: user.id,
+            nama_lengkap: user.nama_lengkap,
             username: user.username,
             email: user.email,
             role: user.role
@@ -251,11 +251,10 @@ const LoginPage = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className={`w-full py-3 px-4 text-sm font-medium text-white rounded-lg transition-all duration-300 ${
-                    loading
+                  className={`w-full py-3 px-4 text-sm font-medium text-white rounded-lg transition-all duration-300 ${loading
                       ? "bg-gray-400 cursor-not-allowed"
                       : "bg-blue-600 hover:bg-blue-700 shadow-md hover:shadow-lg"
-                  }`}
+                    }`}
                 >
                   {loading ? (
                     <span className="flex items-center justify-center">
