@@ -16,8 +16,8 @@ export default function ServiceReport() {
   // Service Report Notes
   const [reportId, setReportId] = useState(null);
   const [keluhanCustomer, setKeluhanCustomer] = useState("");
-  const [tindakanPerbaikan, setTindakanPerbaikan] = useState("");
   const [catatanMontir, setCatatanMontir] = useState("");
+  const [tindakanPerbaikan, setTindakanPerbaikan] = useState("");
   const [rekomendasiService, setRekomendasiService] = useState("");
 
   // Spareparts
@@ -66,8 +66,8 @@ export default function ServiceReport() {
       if (reportData) {
         setReportId(reportData.id);
         setKeluhanCustomer(reportData.keluhan_customer || "");
-        setTindakanPerbaikan(reportData.tindakan_perbaikan || "");
         setCatatanMontir(reportData.catatan_montir || "");
+        setTindakanPerbaikan(reportData.tindakan_perbaikan || "");
         setRekomendasiService(reportData.rekomendasi_service || "");
       }
 
@@ -136,8 +136,8 @@ export default function ServiceReport() {
         booking_id: bookingId,
         montir_id: currentUser?.id,
         keluhan_customer: keluhanCustomer,
-        tindakan_perbaikan: tindakanPerbaikan,
         catatan_montir: catatanMontir,
+        tindakan_perbaikan: tindakanPerbaikan,
         rekomendasi_service: rekomendasiService,
       };
 
@@ -154,7 +154,7 @@ export default function ServiceReport() {
         // Insert new
         const { data, error } = await supabase
           .from("service_reports")
-          .insert([payload])
+          .insert([{ booking_id: bookingId, catatan_montir: catatanMontir }])
           .select("id")
           .single();
         if (error) throw error;
@@ -476,11 +476,9 @@ export default function ServiceReport() {
                   <textarea
                     rows={4}
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm"
-                    placeholder="Catatan umum mengenai servis..."
+                    placeholder="Keluhan yang dirasakan pelanggan..."
                     value={keluhanCustomer}
-                    onChange={(e) =>
-                      setKeluhanCustomer(e.target.value)
-                    }
+                    onChange={(e) => setKeluhanCustomer(e.target.value)}
                   />
                 </div>
                 <div>
@@ -490,9 +488,7 @@ export default function ServiceReport() {
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm"
                     placeholder="Hasil pemeriksaan awal..."
                     value={catatanMontir}
-                    onChange={(e) =>
-                      setCatatanMontir(e.target.value)
-                    }
+                    onChange={(e) => setCatatanMontir(e.target.value)}
                   />
                 </div>
                 <div>
@@ -502,9 +498,7 @@ export default function ServiceReport() {
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm"
                     placeholder="Detail tindakan perbaikan yang dilakukan..."
                     value={tindakanPerbaikan}
-                    onChange={(e) =>
-                      setTindakanPerbaikan(e.target.value)
-                    }
+                    onChange={(e) => setTindakanPerbaikan(e.target.value)}
                   />
                 </div>
                 <div>
@@ -512,11 +506,9 @@ export default function ServiceReport() {
                   <textarea
                     rows={4}
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm"
-                    placeholder="Catatan akhir sebelum diserahkan ke pelanggan..."
+                    placeholder="Saran untuk servis selanjutnya..."
                     value={rekomendasiService}
-                    onChange={(e) =>
-                      setRekomendasiService(e.target.value)
-                    }
+                    onChange={(e) => setRekomendasiService(e.target.value)}
                   />
                 </div>
               </div>
