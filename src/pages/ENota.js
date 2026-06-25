@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
-import { FiCheckCircle, FiPrinter, FiDownload } from "react-icons/fi";
+import { FiCheckCircle } from "react-icons/fi";
 import { useReactToPrint } from "react-to-print";
 
 export default function ENota() {
@@ -50,11 +50,6 @@ export default function ENota() {
       setLoading(false);
     }
   };
-
-  const handlePrint = useReactToPrint({
-    content: () => printRef.current,
-    documentTitle: `ENota_${invoice?.invoice_number || "Invoice"}`,
-  });
 
   if (loading) {
     return (
