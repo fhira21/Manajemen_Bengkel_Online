@@ -125,9 +125,6 @@ export default function CreateInvoice() {
         supabase.from("spareparts").select("id, nama, harga_jual"),
         supabase.from("promo").select("*")
       ]);
-      console.log("PROMO RESPONSE", pRes);
-      console.log("PROMO DATA", pRes.data);
-      console.log("PROMO ERROR", pRes.error);
       if (sRes.data) setDbServices(sRes.data);
       if (spRes.data) setDbSpareparts(spRes.data);
       if (pRes.data) setDbPromos(pRes.data);
