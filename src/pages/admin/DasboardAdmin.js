@@ -1,4 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, {
+  useEffect,
+  useState,
+  useCallback
+} from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../../lib/supabaseClient";
 import SidebarAdmin from "../../components/SidebarAdmin";
@@ -21,15 +25,7 @@ export default function DashboardAdmin() {
   });
   const [showFilters, setShowFilters] = useState(false);
 
-  useEffect(() => {
-    fetchBookings();
-  }, [dateFilter]);
-
-  useEffect(() => {
-    fetchMontirs();
-  }, []);
-
-  const fetchBookings = async () => {
+  const fetchBookings = useCallback(async () => {
     setLoading(true);
 
     let query = supabase
@@ -37,14 +33,21 @@ export default function DashboardAdmin() {
       .select("*");
 
     if (dateFilter) {
-      query = query.eq("tgl_booking", dateFilter);
+      query = query.eq(
+        "tgl_booking",
+        dateFilter
+      );
     }
 
-    query = query.order("tgl_booking", {
-      ascending: true,
-    });
+    query = query.order(
+      "tgl_booking",
+      {
+        ascending: true,
+      }
+    );
 
-    const { data, error } = await query;
+    const { data, error } =
+      await query;
 
     if (error) {
       console.error(error);
@@ -53,17 +56,34 @@ export default function DashboardAdmin() {
     }
 
     setLoading(false);
-  };
+  }, [dateFilter]);
 
-  const fetchMontirs = async () => {
-    const { data, error } = await supabase
-      .from("users")
-      .select("id, nama_lengkap")
-      .eq("role", "montir");
+  useEffect(() => {
+    fetchBookings();
+  }, [fetchBookings]);
 
-    if (error) console.error("Error fetching montirs:", error);
-    else setMontirs(data || []);
-  };
+
+  const fetchMontirs =
+    useCallback(async () => {
+      const { data, error } =
+        await supabase
+          .from("users")
+          .select(
+            "id,nama_lengkap"
+          )
+          .eq("role", "montir");
+
+      if (error) {
+        console.error(error);
+      } else {
+        setMontirs(data || []);
+      }
+    }, []);
+
+  useEffect(() => {
+    fetchMontirs();
+  }, [fetchMontirs]);
+
 
   const handleAssignMontir = async (
     bookingId,
