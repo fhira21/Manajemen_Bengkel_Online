@@ -1,11 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { FiHome, FiUsers, FiTag, FiPackage, FiTool, FiUser, FiLogOut, FiMenu, FiX, FiCheck, FiShield } from "react-icons/fi";
+import { FaHistory } from "react-icons/fa";
 import { motion } from "framer-motion";
 
 const SidebarAdmin = () => {
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
+  const [isMobile, setIsMobile] = useState(
+    window.innerWidth < 768
+  );
+
+  const [sidebarOpen, setSidebarOpen] =
+    useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const [activeMenu, setActiveMenu] = useState("");
@@ -18,6 +23,7 @@ const SidebarAdmin = () => {
     else if (path.includes("promo")) setActiveMenu("promo");
     else if (path.includes("sparepart")) setActiveMenu("sparepart");
     else if (path.includes("service")) setActiveMenu("service");
+    else if (path.includes("history")) setActiveMenu("history");
     else if (path.includes("karyawan")) setActiveMenu("karyawan");
     else setActiveMenu("dashboard");
   }, [location]);
@@ -26,8 +32,9 @@ const SidebarAdmin = () => {
     const handleResize = () => {
       const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
-      if (!mobile) setSidebarOpen(true);
-      else setSidebarOpen(false);
+      if (mobile) {
+        setSidebarOpen(false);
+      }
     };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
@@ -39,6 +46,7 @@ const SidebarAdmin = () => {
     { path: "/admin/promo", name: "Promo", icon: <FiTag className="text-xl" />, key: "promo" },
     { path: "/admin/sparepart", name: "Sparepart", icon: <FiPackage className="text-xl" />, key: "sparepart" },
     { path: "/admin/service", name: "Service", icon: <FiTool className="text-xl" />, key: "service" },
+    { path: "/admin/invoices/history", name: "Riwayat Nota", icon: <FaHistory className="text-xl" />, key: "history" },
     { path: "/admin/karyawan", name: "Karyawan", icon: <FiUser className="text-xl" />, key: "karyawan" }
   ];
 
@@ -54,32 +62,90 @@ const SidebarAdmin = () => {
 
   return (
     <>
+      {/* Mobile Topbar */}
       {isMobile && (
-        <button
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className={`fixed z-50 top-4 left-4 p-2 rounded-xl bg-blue-600 text-white shadow-lg transition-transform duration-300 ${sidebarOpen ? "transform rotate-90" : ""}`}
-        >
-          {sidebarOpen ? <FiX className="text-2xl" /> : <FiMenu className="text-2xl" />}
-        </button>
+        <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-white border-b border-gray-200 shadow-sm px-4 py-3 flex items-center justify-between">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <FiMenu className="text-2xl" />
+          </button>
+          <div className="font-black text-gray-900 text-lg flex items-center gap-2">
+            <div className="bg-blue-600 text-white p-1.5 rounded-lg shadow-sm">
+              <FiShield className="w-4 h-4" />
+            </div>
+            Volkswagen Admin
+          </div>
+        </div>
       )}
 
+      {/* Backdrop for Mobile Drawer */}
       {isMobile && sidebarOpen && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-30" onClick={() => setSidebarOpen(false)} />
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-300"
+          onClick={() => setSidebarOpen(false)}
+        />
       )}
 
       <aside
-        className={`fixed md:fixed top-0 left-0 z-40 w-64 h-screen bg-white border-r border-gray-100 flex flex-col shadow-sm transition-transform duration-300
-    ${sidebarOpen ?
-            "translate-x-0" : "-translate-x-full md:translate-x-0"}`}
-      >        <div className="flex flex-col h-full overflow-hidden">
+        className={`
+    fixed left-0 z-50 bg-white shadow-xl
+    transition-all duration-300 ease-in-out
+
+    ${isMobile
+            ? `
+          top-16
+          w-full
+          max-h-[80vh]
+          rounded-b-3xl
+          border-b border-gray-100
+          ${sidebarOpen
+              ? "translate-y-0 opacity-100"
+              : "-translate-y-full opacity-0 pointer-events-none"
+            }
+        `
+            : `
+          top-0
+          w-64
+          h-screen
+          border-r border-gray-100
+        `
+          }
+  `}
+      >
+        <div
+          className={`
+    flex
+    flex-col
+    ${isMobile
+              ? "max-h-[70vh]"
+              : "h-full"
+            }
+    overflow-hidden
+  `}
+        >
           {/* Logo Section */}
-          <div className="p-6 pb-4">
+          <div className="p-6 pb-4 flex justify-between items-center border-b border-gray-100">
             <h2 className="text-2xl font-black text-gray-900 flex items-center gap-3">
               <div className="bg-blue-600 text-white p-2 rounded-xl shadow-md shadow-blue-600/20">
                 <FiShield className="w-6 h-6" />
               </div>
-              <span>Admin<span className="text-blue-600">Panel</span></span>
+
+              <span>
+                Admin
+                <span className="text-blue-600">Panel</span>
+              </span>
             </h2>
+
+            {isMobile && (
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className="p-2 rounded-xl hover:bg-gray-100"
+              >
+                <FiX className="text-xl" />
+              </button>
+            )}
           </div>
 
           {/* Navigation */}
@@ -134,10 +200,10 @@ const SidebarAdmin = () => {
               </div>
               <button
                 onClick={handleLogout}
-                className="w-full flex items-center justify-center gap-2 p-3 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white rounded-xl transition-all duration-200 font-bold shadow-sm"
+                className="w-full flex items-center justify-center gap-2 p-3 rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all"
               >
-                <FiLogOut className="text-lg" />
-                <span>Keluar</span>
+                <FiLogOut />
+                Keluar
               </button>
             </div>
           </div>

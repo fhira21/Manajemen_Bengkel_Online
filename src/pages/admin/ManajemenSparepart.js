@@ -160,7 +160,7 @@ const ManajemenSparepart = () => {
   return (
     <div className="flex bg-gray-50 min-h-screen">
       <SidebarAdmin />
-      <main className="flex-1 md:ml-64 p-4 sm:p-6 lg:p-8 w-full">
+      <main className="flex-1 md:ml-64 p-4 md:p-6 lg:p-8 w-full">
         <div className="max-w-full mx-auto">
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
@@ -245,8 +245,8 @@ const ManajemenSparepart = () => {
             </div>
 
             {/* Desktop Table */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
+            <div className="overflow-x-auto">
+              <table className="min-w-[900px] w-full divide-y divide-gray-200 text-sm">
                 <thead className="bg-gray-50/50">
                   <tr>
                     <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Kode</th>

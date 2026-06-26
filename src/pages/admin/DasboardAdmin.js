@@ -7,8 +7,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../../lib/supabaseClient";
 import SidebarAdmin from "../../components/SidebarAdmin";
 import Skeleton from "../../components/ui/skeleton";
-import { FiSearch, FiFilter, FiChevronDown, FiChevronUp, FiX, FiPhone, FiCalendar, FiTool } from "react-icons/fi";
+import { FiSearch, FiFilter, FiChevronDown, FiChevronUp, FiX, FiPhone, FiCalendar, FiTool, FiUsers, FiFileText, FiDollarSign, FiClock, FiCheckCircle } from "react-icons/fi";
 import { FaCar } from "react-icons/fa";
+import { ResponsiveContainer, LineChart, CartesianGrid, Tooltip, Line, XAxis, YAxis } from "recharts";
 
 export default function DashboardAdmin() {
   const [bookings, setBookings] = useState([]);
@@ -24,6 +25,11 @@ export default function DashboardAdmin() {
     direction: "desc",
   });
   const [showFilters, setShowFilters] = useState(false);
+
+  // New Dashboard Report States
+  const [totalCustomers, setTotalCustomers] = useState(0);
+  const [invoices, setInvoices] = useState([]);
+  const [monthlyRevenue, setMonthlyRevenue] = useState([]);
 
   const fetchBookings = useCallback(async () => {
     setLoading(true);
@@ -60,7 +66,53 @@ export default function DashboardAdmin() {
 
   useEffect(() => {
     fetchBookings();
+    fetchDashboardStats();
   }, [fetchBookings]);
+
+  const fetchDashboardStats = async () => {
+    try {
+      // Fetch total customers
+      const { count: customerCount } = await supabase
+        .from("customers")
+        .select("*", { count: "exact", head: true });
+      setTotalCustomers(customerCount || 0);
+
+      // Fetch all invoices for revenue, recent transactions, and charts
+      const { data: invoicesData, error: invoiceErr } = await supabase
+        .from("invoices")
+        .select(`
+          id, invoice_number, grand_total, payment_method, created_at,
+          bookings (
+            customers ( nama, no_telepon ),
+            vehicles ( plat_nomor, tipe_kendaraan )
+          )
+        `)
+        .order("created_at", { ascending: true }); // ascending to process chart sequentially
+
+      if (!invoiceErr && invoicesData) {
+        setInvoices(invoicesData);
+        
+        // Process Monthly Revenue Chart Data
+        const monthlyDataMap = {};
+        invoicesData.forEach(inv => {
+          const date = new Date(inv.created_at);
+          const monthKey = date.toLocaleString('default', { month: 'short', year: 'numeric' });
+          if (!monthlyDataMap[monthKey]) {
+            monthlyDataMap[monthKey] = 0;
+          }
+          monthlyDataMap[monthKey] += Number(inv.grand_total || 0);
+        });
+
+        const chartData = Object.keys(monthlyDataMap).map(key => ({
+          name: key,
+          Revenue: monthlyDataMap[key]
+        }));
+        setMonthlyRevenue(chartData);
+      }
+    } catch (err) {
+      console.error("Failed to fetch dashboard stats", err);
+    }
+  };
 
 
   const fetchMontirs =
@@ -182,6 +234,10 @@ export default function DashboardAdmin() {
   const getStatusCount = (status) =>
     bookings.filter((b) => b.status === status).length;
 
+  const totalInvoices = invoices.length;
+  const totalRevenue = invoices.reduce((sum, inv) => sum + Number(inv.grand_total || 0), 0);
+  const recentInvoices = [...invoices].reverse().slice(0, 5); // 5 latest
+
   const getStatusBadge = (status) => {
     switch (status) {
       case "pending":
@@ -214,56 +270,182 @@ export default function DashboardAdmin() {
             </p>
           </div>
 
-          {/* KPI Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
+          {/* Top KPI Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex flex-col"
+              className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm flex flex-col"
             >
-              <h2 className="text-gray-500 text-sm font-medium">Total Booking</h2>
-              <p className="text-3xl font-bold text-gray-800 mt-2">{getTotalBooking()}</p>
+              <div className="flex items-center gap-3 text-blue-600 mb-2">
+                <FiUsers className="text-xl" />
+                <h2 className="text-gray-500 text-sm font-semibold">Total Customers</h2>
+              </div>
+              <p className="text-3xl font-black text-gray-900 mt-1">{totalCustomers}</p>
+              <p className="text-xs text-gray-400 mt-2">All registered customers</p>
             </motion.div>
 
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex flex-col border-l-4 border-l-yellow-400"
+              className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm flex flex-col"
             >
-              <h2 className="text-gray-500 text-sm font-medium">Pending</h2>
-              <p className="text-3xl font-bold text-gray-800 mt-2">{getStatusCount("pending")}</p>
+              <div className="flex items-center gap-3 text-indigo-600 mb-2">
+                <FiCalendar className="text-xl" />
+                <h2 className="text-gray-500 text-sm font-semibold">Total Bookings</h2>
+              </div>
+              <p className="text-3xl font-black text-gray-900 mt-1">{getTotalBooking()}</p>
+              <p className="text-xs text-gray-400 mt-2">All time bookings</p>
             </motion.div>
 
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex flex-col border-l-4 border-l-blue-400"
+              className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm flex flex-col"
             >
-              <h2 className="text-gray-500 text-sm font-medium">In Progress</h2>
-              <p className="text-3xl font-bold text-gray-800 mt-2">{getStatusCount("in_progress")}</p>
+              <div className="flex items-center gap-3 text-purple-600 mb-2">
+                <FiFileText className="text-xl" />
+                <h2 className="text-gray-500 text-sm font-semibold">Total Invoices</h2>
+              </div>
+              <p className="text-3xl font-black text-gray-900 mt-1">{totalInvoices}</p>
+              <p className="text-xs text-gray-400 mt-2">Generated e-notas</p>
             </motion.div>
 
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex flex-col border-l-4 border-l-green-400"
+              className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm flex flex-col"
             >
-              <h2 className="text-gray-500 text-sm font-medium">Selesai</h2>
-              <p className="text-3xl font-bold text-gray-800 mt-2">{getStatusCount("done")}</p>
+              <div className="flex items-center gap-3 text-green-600 mb-2">
+                <FiDollarSign className="text-xl" />
+                <h2 className="text-gray-500 text-sm font-semibold">Total Revenue</h2>
+              </div>
+              <p className="text-3xl font-black text-gray-900 mt-1">
+                Rp {totalRevenue.toLocaleString("id-ID")}
+              </p>
+              <p className="text-xs text-gray-400 mt-2">Gross revenue all time</p>
+            </motion.div>
+          </div>
+
+          <div className="flex flex-col lg:flex-row gap-6 mb-8">
+            {/* Chart Section */}
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
+              className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex-1"
+            >
+              <h2 className="text-lg font-black text-gray-900 mb-6">Monthly Revenue</h2>
+              <div className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={monthlyRevenue}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 12}} dy={10} />
+                    <YAxis 
+                      axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 12}} 
+                      tickFormatter={(value) => `Rp ${(value / 1000000).toFixed(0)}M`}
+                    />
+                    <Tooltip 
+                      formatter={(value) => [`Rp ${value.toLocaleString('id-ID')}`, 'Revenue']}
+                      contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
+                    />
+                    <Line type="monotone" dataKey="Revenue" stroke="#2563eb" strokeWidth={3} dot={{r: 4, fill: '#2563eb'}} activeDot={{r: 6}} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
             </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex flex-col border-l-4 border-l-red-400"
+            {/* Analytics Overview */}
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
+              className="lg:w-80 flex flex-col gap-4"
             >
-              <h2 className="text-gray-500 text-sm font-medium">Batal</h2>
-              <p className="text-3xl font-bold text-gray-800 mt-2">{getStatusCount("cancelled")}</p>
+              <h2 className="text-lg font-black text-gray-900 mb-2">Booking Analytics</h2>
+              
+              <div className="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-500">Pending Bookings</h3>
+                  <p className="text-2xl font-black text-gray-900 mt-1">{getStatusCount("pending")}</p>
+                </div>
+                <div className="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-600">
+                  <FiClock className="text-xl" />
+                </div>
+              </div>
+
+              <div className="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-500">In Progress</h3>
+                  <p className="text-2xl font-black text-gray-900 mt-1">{getStatusCount("in_progress")}</p>
+                </div>
+                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                  <FiTool className="text-xl" />
+                </div>
+              </div>
+
+              <div className="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-500">Completed</h3>
+                  <p className="text-2xl font-black text-gray-900 mt-1">{getStatusCount("done")}</p>
+                </div>
+                <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+                  <FiCheckCircle className="text-xl" />
+                </div>
+              </div>
             </motion.div>
+          </div>
+
+          {/* Recent Transactions Table */}
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}
+            className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-8"
+          >
+            <div className="p-6 border-b border-gray-100">
+              <h2 className="text-lg font-black text-gray-900">Recent Transactions</h2>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[900px] text-sm text-left">
+                <thead className="bg-gray-50 border-b border-gray-100 text-gray-600 font-bold">
+                  <tr>
+                    <th className="px-6 py-4">Invoice Number</th>
+                    <th className="px-6 py-4">Customer Name</th>
+                    <th className="px-6 py-4">Vehicle Plate</th>
+                    <th className="px-6 py-4">Payment</th>
+                    <th className="px-6 py-4 text-right">Total</th>
+                    <th className="px-6 py-4">Date</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {recentInvoices.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="px-6 py-8 text-center text-gray-500">No recent transactions</td>
+                    </tr>
+                  ) : (
+                    recentInvoices.map((inv) => (
+                      <tr key={inv.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-6 py-4 font-semibold text-gray-900">{inv.invoice_number}</td>
+                        <td className="px-6 py-4">{inv.bookings?.customers?.nama || "-"}</td>
+                        <td className="px-6 py-4 font-mono text-gray-500">{inv.bookings?.vehicles?.plat_nomor || "-"}</td>
+                        <td className="px-6 py-4">
+                          <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-bold">{inv.payment_method || "-"}</span>
+                        </td>
+                        <td className="px-6 py-4 text-right font-bold text-gray-900">
+                          Rp {(inv.grand_total || 0).toLocaleString("id-ID")}
+                        </td>
+                        <td className="px-6 py-4 text-gray-500">
+                          {new Date(inv.created_at).toLocaleDateString("id-ID")}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </motion.div>
+
+          <div className="mb-6">
+            <h2 className="text-lg font-black text-gray-900">Booking Management</h2>
+            <p className="text-gray-500 text-sm mt-1">View and assign workshop bookings.</p>
           </div>
 
           {/* Table / List View */}
@@ -352,7 +534,7 @@ export default function DashboardAdmin() {
 
             {/* Desktop Table */}
             <div className="hidden md:block overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
+              <table className="min-w-[900px] w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50 sticky top-0 z-10">
                   <tr>
                     {[

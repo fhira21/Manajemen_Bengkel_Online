@@ -135,7 +135,7 @@ const ManajemenService = () => {
       className="flex"
     >
       <SidebarAdmin />
-      <main className="flex-1 md:ml-64 p-4">
+      <main className="flex-1 md:ml-64 p-4 md:p-6 lg:p-8">
         <motion.div
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -275,7 +275,7 @@ const ManajemenService = () => {
               </motion.div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200 text-sm">
+                <table className="min-w-[900px] w-full divide-y divide-gray-200 text-sm">
                   <thead className="bg-gray-50">
                     <tr>
                       {["No", "Nama", "Deskripsi", "Harga", "Estimasi (Mnt)", "Aksi"].map(
@@ -393,48 +393,52 @@ const ManajemenService = () => {
                   opacity: 0,
                   transition: { duration: 0.2 }
                 }}
-                className="bg-white rounded-md shadow-lg w-full max-w-md"
+                className="bg-white rounded-2xl shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto"
               >
-                <div className="p-4 border-b border-gray-200">
-                  <h2 className="text-lg font-semibold text-gray-800">
+                <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                  <h2 className="text-xl font-black text-gray-900">
                     {editingService ? "Edit Layanan" : "Tambah Layanan"}
                   </h2>
+                  <button onClick={() => setShowModal(false)} type="button" className="text-gray-400 hover:text-gray-600">
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                  </button>
                 </div>
-                <form onSubmit={handleSubmit} className="p-4 space-y-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Nama Layanan</label>
-                    <input
-                      type="text"
-                      placeholder="Nama layanan"
-                      value={formData.nama}
-                      onChange={(e) => setFormData({ ...formData, nama: e.target.value })}
-                      required
-                      className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Harga</label>
-                    <input
-                      type="number"
-                      placeholder="Harga"
-                      value={formData.harga}
-                      onChange={(e) => setFormData({ ...formData, harga: e.target.value })}
-                      required
-                      className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Estimasi Waktu (Menit)</label>
-                    <input
-                      type="number"
-                      placeholder="Contoh: 60"
-                      value={formData.estimasi_menit}
-                      onChange={(e) => setFormData({ ...formData, estimasi_menit: e.target.value })}
-                      required
-                      className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
+                <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Nama Layanan</label>
+                      <input
+                        type="text"
+                        placeholder="Nama layanan"
+                        value={formData.nama}
+                        onChange={(e) => setFormData({ ...formData, nama: e.target.value })}
+                        required
+                        className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Harga</label>
+                      <input
+                        type="number"
+                        placeholder="Harga"
+                        value={formData.harga}
+                        onChange={(e) => setFormData({ ...formData, harga: e.target.value })}
+                        required
+                        className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Estimasi Waktu (Menit)</label>
+                      <input
+                        type="number"
+                        placeholder="Contoh: 60"
+                        value={formData.estimasi_menit}
+                        onChange={(e) => setFormData({ ...formData, estimasi_menit: e.target.value })}
+                        required
+                        className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                    </div>
+                  <div className="col-span-1 md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-1">Deskripsi</label>
                     <textarea
                       placeholder="Deskripsi layanan"
@@ -442,6 +446,7 @@ const ManajemenService = () => {
                       onChange={(e) => setFormData({ ...formData, deskripsi: e.target.value })}
                       className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 min-h-[80px]"
                     />
+                  </div>
                   </div>
                   <div className="flex justify-end gap-2 pt-4">
                     <motion.button

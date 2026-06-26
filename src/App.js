@@ -5,11 +5,12 @@ import LoginPage from './pages/Login';
 // dashboard admin kasir
 import DashboardAdmin from './pages/admin/DasboardAdmin';
 import ManajemenService from './pages/admin/ManajemenService';
-import ManajemenPelanggan from './pages/admin/ManajemenPelanggan';
+import CustomerManagement from './pages/admin/CustomerManagement';
 import ManajemenKaryawan from './pages/admin/ManajemenMechanic';
 import ManajemenSparepart from './pages/admin/ManajemenSparepart';
 import ManajemenPromo from './pages/admin/ManajemenPromo';
 import CreateInvoice from './pages/admin/CreateInvoice';
+import InvoiceHistory from './pages/admin/InvoiceHistory';
 import ENota from './pages/ENota';
 
 // dashboard montir
@@ -36,11 +37,12 @@ function MainLayout() {
 
       <Route path="/admin/dashboardadmin" element={<DashboardAdmin />} />
       <Route path="/admin/service" element={<ManajemenService />} />
-      <Route path="/admin/Pelanggan" element={<ManajemenPelanggan />} />
+      <Route path="/admin/Pelanggan" element={<CustomerManagement />} />
       <Route path="/admin/karyawan" element={<ManajemenKaryawan />} />
       <Route path="/admin/sparepart" element={<ManajemenSparepart />} />
       <Route path="/admin/promo" element={<ManajemenPromo />} />
       <Route path="/admin/create-invoice/:bookingId" element={<CreateInvoice />} />
+      <Route path="/admin/invoices/history" element={<InvoiceHistory />} />
 
       <Route path="/montir/dashboardmontir" element={<DashboardMontir />} />
       <Route path="/montir/riwayatmontir" element={<RiwayatMontir />} />

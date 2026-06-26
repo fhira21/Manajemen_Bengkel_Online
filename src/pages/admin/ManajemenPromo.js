@@ -150,7 +150,7 @@ const ManajemenPromo = () => {
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.4 }}
-        className="flex-1 md:ml-64 p-4 sm:p-6 lg:p-8"
+        className="flex-1 md:ml-64 p-4 md:p-6 lg:p-8"
       >
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
@@ -205,7 +205,7 @@ const ManajemenPromo = () => {
                 animate={{ scale: 1, y: 0, opacity: 1 }}
                 exit={{ scale: 0.95, y: 20, opacity: 0 }}
                 transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden"
+                className="bg-white rounded-2xl shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto"
               >
                 {/* Header Form */}
                 <div className="flex justify-between items-center border-b border-gray-100 p-5 bg-gray-50">
@@ -419,7 +419,7 @@ const ManajemenPromo = () => {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
+              <table className="min-w-[900px] w-full divide-y divide-gray-200 text-sm">
                 <thead className="bg-gray-50/50">
                   <tr>
                     {[
@@ -486,7 +486,7 @@ const ManajemenPromo = () => {
                         </span>
                       </td>
                       <td className="px-6 py-5 whitespace-nowrap">
-                        <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center gap-3">
                           <button
                             onClick={() => openEditForm(promo)}
                             className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors tooltip"
