@@ -129,9 +129,6 @@ export default function CreateInvoice() {
       if (spRes.data) setDbSpareparts(spRes.data);
       if (pRes.data) setDbPromos(pRes.data);
 
-      console.log(dbPromos);
-      console.log(selectedPromo);
-
     } catch (err) {
       console.error("Error fetching data:", err);
       alert("Gagal memuat data booking.");
