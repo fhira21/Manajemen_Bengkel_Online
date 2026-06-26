@@ -357,7 +357,7 @@ export default function CreateInvoice() {
   return (
     <div className="flex bg-gray-50 min-h-screen font-sans text-gray-900 relative">
       <Sidebar />
-      <div className="flex-1 md:ml-64 p-4 md:p-8">
+      <div className="flex-1 pt-16 md:pt-0 md:ml-64 p-4 md:p-8">
         <div className="max-w-7xl mx-auto space-y-6">
 
           {/* Header */}
@@ -857,7 +857,7 @@ export default function CreateInvoice() {
       {/* MODAL: E-Nota Preview */}
       {showModal && generatedInvoice && (
         <div className="fixed inset-0 z-50 bg-gray-900/60 backdrop-blur-sm flex justify-center items-center p-4">
-          <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-screen">
+          <div className="bg-white w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-screen">
 
             {/* Modal Header */}
             <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">

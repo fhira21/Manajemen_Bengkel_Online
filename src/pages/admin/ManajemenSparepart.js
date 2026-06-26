@@ -160,7 +160,7 @@ const ManajemenSparepart = () => {
   return (
     <div className="flex bg-gray-50 min-h-screen">
       <SidebarAdmin />
-      <main className="flex-1 md:ml-64 p-4 md:p-6 lg:p-8 w-full">
+      <main className="flex-1 pt-16 md:pt-0 md:ml-64 p-4 pt-20 p-6 md:pt-6 lg:p-8 w-full">
         <div className="max-w-full mx-auto">
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
@@ -178,7 +178,7 @@ const ManajemenSparepart = () => {
           </div>
 
           {/* KPI Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
               <div className="flex items-center gap-3 mb-2">
                 <div className="p-2.5 bg-blue-50 text-blue-600 rounded-lg"><FiBox className="text-xl" /></div>
@@ -378,7 +378,7 @@ const ManajemenSparepart = () => {
                 initial={{ scale: 0.95, y: 20, opacity: 0 }}
                 animate={{ scale: 1, y: 0, opacity: 1 }}
                 exit={{ scale: 0.95, y: 20, opacity: 0 }}
-                className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden"
+                className="bg-white rounded-2xl shadow-xl w-full max-w-3xl overflow-hidden"
               >
                 <div className="p-5 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
                   <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">

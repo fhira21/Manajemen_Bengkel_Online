@@ -28,8 +28,11 @@ export default function DashboardAdmin() {
 
   // New Dashboard Report States
   const [totalCustomers, setTotalCustomers] = useState(0);
-  const [invoices, setInvoices] = useState([]);
+  const [totalInvoices, setTotalInvoices] = useState(0);
+  const [totalRevenue, setTotalRevenue] = useState(0);
+
   const [monthlyRevenue, setMonthlyRevenue] = useState([]);
+  const [recentInvoices, setRecentInvoices] = useState([]);
 
   const fetchBookings = useCallback(async () => {
     setLoading(true);
@@ -69,50 +72,119 @@ export default function DashboardAdmin() {
     fetchDashboardStats();
   }, [fetchBookings]);
 
-  const fetchDashboardStats = async () => {
-    try {
-      // Fetch total customers
-      const { count: customerCount } = await supabase
-        .from("customers")
-        .select("*", { count: "exact", head: true });
-      setTotalCustomers(customerCount || 0);
-
-      // Fetch all invoices for revenue, recent transactions, and charts
-      const { data: invoicesData, error: invoiceErr } = await supabase
-        .from("invoices")
-        .select(`
-          id, invoice_number, grand_total, payment_method, created_at,
-          bookings (
-            customers ( nama, no_telepon ),
-            vehicles ( plat_nomor, tipe_kendaraan )
+  const fetchDashboardStats =
+    async () => {
+      try {
+        /*
+        =====================
+        SUMMARY
+        =====================
+        */
+        const {
+          data: summary,
+          error: summaryError,
+        } = await supabase
+          .from(
+            "dashboard_summary_view"
           )
-        `)
-        .order("created_at", { ascending: true }); // ascending to process chart sequentially
+          .select("*")
+          .single();
 
-      if (!invoiceErr && invoicesData) {
-        setInvoices(invoicesData);
-        
-        // Process Monthly Revenue Chart Data
-        const monthlyDataMap = {};
-        invoicesData.forEach(inv => {
-          const date = new Date(inv.created_at);
-          const monthKey = date.toLocaleString('default', { month: 'short', year: 'numeric' });
-          if (!monthlyDataMap[monthKey]) {
-            monthlyDataMap[monthKey] = 0;
-          }
-          monthlyDataMap[monthKey] += Number(inv.grand_total || 0);
-        });
+        if (
+          summaryError
+        ) {
+          console.error(
+            summaryError
+          );
+        } else {
+          setTotalCustomers(
+            summary.total_customers
+          );
 
-        const chartData = Object.keys(monthlyDataMap).map(key => ({
-          name: key,
-          Revenue: monthlyDataMap[key]
-        }));
-        setMonthlyRevenue(chartData);
+          setTotalInvoices(
+            summary.total_invoices
+          );
+
+          setTotalRevenue(
+            Number(
+              summary.total_revenue
+            )
+          );
+        }
+
+        /*
+        =====================
+        MONTHLY REVENUE
+        =====================
+        */
+        const {
+          data: monthlyData,
+          error:
+          monthlyError,
+        } = await supabase
+          .from(
+            "monthly_revenue_view"
+          )
+          .select("*");
+
+        if (
+          monthlyError
+        ) {
+          console.error(
+            monthlyError
+          );
+        } else {
+          setMonthlyRevenue(
+            monthlyData.map(
+              (
+                item
+              ) => ({
+                name: item.month,
+                Revenue:
+                  Number(
+                    item.revenue
+                  ),
+              })
+            )
+          );
+        }
+
+        /*
+        =====================
+        RECENT INVOICE
+        =====================
+        */
+        const {
+          data:
+          recentData,
+          error:
+          recentError,
+        } = await supabase
+          .from(
+            "recent_transactions_view"
+          )
+          .select("*")
+          .limit(5);
+
+        if (
+          recentError
+        ) {
+          console.error(
+            recentError
+          );
+        } else {
+          setRecentInvoices(
+            recentData
+          );
+        }
+      } catch (
+      err
+      ) {
+        console.error(
+          err
+        );
       }
-    } catch (err) {
-      console.error("Failed to fetch dashboard stats", err);
-    }
-  };
+    };
 
 
   const fetchMontirs =
@@ -234,10 +306,6 @@ export default function DashboardAdmin() {
   const getStatusCount = (status) =>
     bookings.filter((b) => b.status === status).length;
 
-  const totalInvoices = invoices.length;
-  const totalRevenue = invoices.reduce((sum, inv) => sum + Number(inv.grand_total || 0), 0);
-  const recentInvoices = [...invoices].reverse().slice(0, 5); // 5 latest
-
   const getStatusBadge = (status) => {
     switch (status) {
       case "pending":
@@ -259,7 +327,7 @@ export default function DashboardAdmin() {
     <div className="flex bg-gray-50 min-h-screen">
       <SidebarAdmin />
 
-      <main className="flex-1 md:ml-64 p-4 sm:p-6 lg:p-8 w-full">
+      <main className="flex-1 pt-16 md:ml-64 p-4 sm:pt-20 p-6 md:pt-6 lg:p-8 w-full">
         <div className="max-w-full mx-auto">
           <div className="mb-8">
             <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
@@ -271,7 +339,7 @@ export default function DashboardAdmin() {
           </div>
 
           {/* Top KPI Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -332,37 +400,37 @@ export default function DashboardAdmin() {
 
           <div className="flex flex-col lg:flex-row gap-6 mb-8">
             {/* Chart Section */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
               className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex-1"
             >
               <h2 className="text-lg font-black text-gray-900 mb-6">Monthly Revenue</h2>
-              <div className="h-[300px] w-full">
+              <div className="w-full h-[250px] md:h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={monthlyRevenue}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 12}} dy={10} />
-                    <YAxis 
-                      axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 12}} 
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} dy={10} />
+                    <YAxis
+                      axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }}
                       tickFormatter={(value) => `Rp ${(value / 1000000).toFixed(0)}M`}
                     />
-                    <Tooltip 
+                    <Tooltip
                       formatter={(value) => [`Rp ${value.toLocaleString('id-ID')}`, 'Revenue']}
-                      contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
+                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                     />
-                    <Line type="monotone" dataKey="Revenue" stroke="#2563eb" strokeWidth={3} dot={{r: 4, fill: '#2563eb'}} activeDot={{r: 6}} />
+                    <Line type="monotone" dataKey="Revenue" stroke="#2563eb" strokeWidth={3} dot={{ r: 4, fill: '#2563eb' }} activeDot={{ r: 6 }} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
             </motion.div>
 
             {/* Analytics Overview */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
               className="lg:w-80 flex flex-col gap-4"
             >
               <h2 className="text-lg font-black text-gray-900 mb-2">Booking Analytics</h2>
-              
+
               <div className="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm flex items-center justify-between">
                 <div>
                   <h3 className="text-sm font-semibold text-gray-500">Pending Bookings</h3>
@@ -424,13 +492,24 @@ export default function DashboardAdmin() {
                     recentInvoices.map((inv) => (
                       <tr key={inv.id} className="hover:bg-gray-50 transition-colors">
                         <td className="px-6 py-4 font-semibold text-gray-900">{inv.invoice_number}</td>
-                        <td className="px-6 py-4">{inv.bookings?.customers?.nama || "-"}</td>
-                        <td className="px-6 py-4 font-mono text-gray-500">{inv.bookings?.vehicles?.plat_nomor || "-"}</td>
+                        <td className="px-6 py-4">{
+                          inv.customer_name
+                        }
+                        </td>
+                        <td className="px-6 py-4 font-mono text-gray-500">{
+                          inv.plat_nomor
+                        }
+                        </td>
                         <td className="px-6 py-4">
                           <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-bold">{inv.payment_method || "-"}</span>
                         </td>
                         <td className="px-6 py-4 text-right font-bold text-gray-900">
-                          Rp {(inv.grand_total || 0).toLocaleString("id-ID")}
+                          Rp{" "}
+                          {Number(
+                            inv.total
+                          ).toLocaleString(
+                            "id-ID"
+                          )}
                         </td>
                         <td className="px-6 py-4 text-gray-500">
                           {new Date(inv.created_at).toLocaleDateString("id-ID")}

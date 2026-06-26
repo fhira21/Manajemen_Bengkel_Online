@@ -76,7 +76,7 @@ export default function InvoiceHistory() {
   return (
     <div className="flex bg-gray-50 min-h-screen font-sans text-gray-900">
       <SidebarAdmin />
-      <div className="flex-1 md:ml-64 p-4 md:p-6 lg:p-8">
+      <div className="flex-1 pt-16 md:pt-0 md:ml-64 p-4 pt-20 p-6 md:pt-6 lg:p-8">
         <div className="max-w-7xl mx-auto space-y-6">
 
           {/* Header */}
@@ -191,7 +191,7 @@ export default function InvoiceHistory() {
       {/* MODAL: E-Nota Preview */}
       {showModal && selectedInvoice && (
         <div className="fixed inset-0 z-50 bg-gray-900/60 backdrop-blur-sm flex justify-center items-center p-4">
-          <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-screen animate-fade-in mx-4 md:mx-0">
+          <div className="bg-white w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-screen animate-fade-in mx-4 md:mx-0">
 
             {/* Modal Header */}
             <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">

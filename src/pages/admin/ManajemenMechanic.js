@@ -138,7 +138,7 @@ const ManajemenKaryawan = () => {
     >
       <SidebarAdmin />
 
-      <main className="flex-1 md:ml-64 p-4 md:p-6 lg:p-8">
+      <main className="flex-1 pt-16 md:pt-0 md:ml-64 p-4 md:p-6 lg:p-8">
         <motion.div
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -441,7 +441,7 @@ const ManajemenKaryawan = () => {
                   opacity: 0,
                   transition: { duration: 0.2 }
                 }}
-                className="bg-white rounded-2xl shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto"
+                className="bg-white rounded-2xl shadow-xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-y-auto"
               >
                 <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
                   <h2 className="text-xl font-black text-gray-900">Edit Karyawan</h2>
@@ -587,7 +587,7 @@ const ManajemenKaryawan = () => {
                   opacity: 0,
                   transition: { duration: 0.2 }
                 }}
-                className="bg-white rounded-2xl shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto"
+                className="bg-white rounded-2xl shadow-xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-y-auto"
               >
                 <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
                   <h2 className="text-xl font-black text-gray-900">Tambah Karyawan</h2>

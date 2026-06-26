@@ -57,7 +57,7 @@ export default function CustomerManagement() {
   return (
     <div className="flex bg-gray-50 min-h-screen font-sans text-gray-900">
       <SidebarAdmin />
-      <div className="flex-1 md:ml-64 p-4 md:p-6 lg:p-8">
+      <div className="flex-1 pt-16 md:pt-0 md:ml-64 p-4 sm:pt-20 p-6 md:pt-6 lg:p-8">
         <div className="max-w-7xl mx-auto space-y-6">
           
           {/* Header */}
@@ -69,7 +69,7 @@ export default function CustomerManagement() {
           </div>
 
           {/* Statistics Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
               <p className="text-sm font-semibold text-gray-500">Total Customers</p>
               <p className="text-3xl font-black text-gray-900 mt-2">{totalCustomers}</p>
@@ -167,7 +167,7 @@ export default function CustomerManagement() {
       {/* DETAIL MODAL */}
       {showModal && selectedCustomer && (
         <div className="fixed inset-0 z-50 bg-gray-900/60 backdrop-blur-sm flex justify-center items-center p-4">
-          <div className="bg-white w-full max-w-2xl mx-4 md:mx-0 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-screen animate-fade-in">
+          <div className="bg-white w-full max-w-3xl mx-4 md:mx-0 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-screen animate-fade-in">
             
             {/* Modal Header */}
             <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">

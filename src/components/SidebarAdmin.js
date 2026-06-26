@@ -64,20 +64,23 @@ const SidebarAdmin = () => {
     <>
       {/* Mobile Topbar */}
       {isMobile && (
-        <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-white border-b border-gray-200 shadow-sm px-4 py-3 flex items-center justify-between">
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <FiMenu className="text-2xl" />
-          </button>
-          <div className="font-black text-gray-900 text-lg flex items-center gap-2">
-            <div className="bg-blue-600 text-white p-1.5 rounded-lg shadow-sm">
-              <FiShield className="w-4 h-4" />
+        <>
+          <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 shadow-sm h-16 px-4 flex items-center justify-between">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <FiMenu className="text-2xl" />
+            </button>
+            <div className="font-black text-gray-900 text-lg flex items-center gap-2">
+              <div className="bg-blue-600 text-white p-1.5 rounded-lg shadow-sm">
+                <FiShield className="w-4 h-4" />
+              </div>
+              Volkswagen Admin
             </div>
-            Volkswagen Admin
           </div>
-        </div>
+          <div className="md:hidden h-16" />
+        </>
       )}
 
       {/* Backdrop for Mobile Drawer */}
@@ -91,15 +94,18 @@ const SidebarAdmin = () => {
       <aside
         className={`
     fixed left-0 z-50 bg-white shadow-xl
-    transition-all duration-300 ease-in-out
+    transition-[opacity,transform] duration-300 ease-in-out
 
     ${isMobile
             ? `
           top-16
+          left-0
+          right-0
           w-full
-          max-h-[80vh]
+          max-h-[70vh]
           rounded-b-3xl
           border-b border-gray-100
+          overflow-hidden
           ${sidebarOpen
               ? "translate-y-0 opacity-100"
               : "-translate-y-full opacity-0 pointer-events-none"
