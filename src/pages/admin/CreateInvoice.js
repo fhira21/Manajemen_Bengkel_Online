@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabaseClient";
 import Sidebar from "../../components/SidebarAdmin";
@@ -47,7 +47,7 @@ export default function CreateInvoice() {
   const [generatedInvoice, setGeneratedInvoice] = useState(null);
   const iframeRef = useRef(null);
 
-  const fetchData = useCallback(async () => {
+  const fetchData = async () => {
     setLoading(true);
     try {
       // 1. Booking Info
@@ -136,7 +136,7 @@ export default function CreateInvoice() {
     } finally {
       setLoading(false);
     }
-  }, [bookingId, dbPromos, selectedPromo]);
+  };
 
   useEffect(() => {
     fetchData();
